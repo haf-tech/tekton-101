@@ -51,7 +51,8 @@ OpenShift Pipelines Operator version 0.10.7
 ----
 $ oc new-project tekton-101
 
-$ oc apply -f pipelines/01_create_pipeline.yaml
+$ oc apply -f pipelines/01_tasks.yaml
+$ oc apply -f pipelines/01_pipeline.yaml
 pipeline.tekton.dev/nodejs-build-deploy created
 
 $ oc get pipeline
@@ -89,6 +90,7 @@ http://el-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-56ea.sand
 
 * Volume, PVC
 ** na
+** using `emptyDir`
 
 * Register in GitHub the Webhook
 ** Select the repository in GitHub
@@ -192,33 +194,38 @@ NAME         IMAGE REPOSITORY                                                   
 tekton-101   image-registry.openshift-image-registry.svc:5000/tekton-101/tekton-101   latest   2 minutes ago
 ----
 
+The deployment task triggers a deployment using the manifest files in the `k8s` directory. Afterwards the pod is up and the route is also exposed.
+
+----
+$ oc get pods
+NAME                                                              READY   STATUS      RESTARTS   AGE
+build-deploy-tekton-101-4g5pq-debug-b9d5p-pod-vb8w7               0/1     Completed   0          50s
+build-deploy-tekton-101-4g5pq-nodejs-build-image-tt5xr-po-v96g7   0/6     Completed   0          2m57s
+build-deploy-tekton-101-4g5pq-nodejs-general-deploy-mln6r-lbhcw   0/2     Completed   0          50s
+...
+el-nodejs-build-deploy-trigger-listener-57d5686ccd-7s6h6          1/1     Running     0          150m
+tekton-101-59cf598599-v27xr                                       1/1     Running     0          37s
+
+
+$ oc get svc
+NAME                                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+el-nodejs-build-deploy-trigger-listener   ClusterIP   172.30.61.224    <none>        8080/TCP         152m
+tekton-101                                NodePort    172.30.201.115   <none>        5000:30815/TCP   7m1s
+
+$ oc get routes
+NAME                                      HOST/PORT                                                                                     PATH   SERVICES                                  PORT            TERMINATION   WILDCARD
+el-nodejs-build-deploy-trigger-listener   el-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-56ea.sandbox779.opentlc.com          el-nodejs-build-deploy-trigger-listener   http-listener                 None
+tekton-101                                tekton-101-tekton-101.apps.cluster-56ea.sandbox779.opentlc.com                                       tekton-101                                5050-tcp                      None
+
+
+----
+
 
 image:static/PipelineRuns.png[Overview PipelineRuns in OpenShift WebConsole]
 
 * Direct Webhook Call
 
 
-=== Workarounds
-
-The OpenShift CLI does not recognize well all arguments and parameters
-
-[source,yaml]
-----
-params:       
-    - name: ARGS
-      value: 
-      - "apply -f $(params.k8s_manifests)"
-----
-Results in `Error: unknown command "apply -f k8s" for "oc"`
-Also
-----
-params:       
-    - name: ARGS
-      value: 
-      - "apply"
-      - "-f"
-      - $(params.k8s_manifests)"
-----
 
 === Clean up
 
