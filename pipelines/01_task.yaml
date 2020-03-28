@@ -23,6 +23,8 @@ metadata:
   name: openshift-cli
 spec:
   inputs:
+    resources:
+      - {type: git, name: source}
     params:
       - default:
           - help

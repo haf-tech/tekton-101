@@ -54,6 +54,10 @@ spec:
     taskRef:
       name: openshift-cli
       kind: Task
+    resources:      
+      inputs:      
+      - name: source
+        resource: git-repo  
     params:       
     - name: ARGS
       value: 
