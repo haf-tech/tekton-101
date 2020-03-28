@@ -5,6 +5,10 @@ kind: Task
 metadata:
   name: debug
 spec:
+  inputs:
+    resources:
+      - name: source
+        type: git
   steps:
   - name: list-workspace-files
     image: ubuntu
@@ -24,7 +28,8 @@ metadata:
 spec:
   inputs:
     resources:
-      - {type: git, name: source}
+      - name: source
+        type: git
     params:
       - default:
           - help

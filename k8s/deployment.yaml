@@ -16,7 +16,7 @@ spec:
         app: tekton-101
     spec:
       containers:
-        - image: tekton-101:latest
+        - image: image-registry.openshift-image-registry.svc:5000/tekton-101/tekton-101:latest
           imagePullPolicy: Always
           name: tekton-101
           ports:
