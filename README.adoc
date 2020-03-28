@@ -12,8 +12,14 @@ OpenShift Pipelines Operator version 0.10.7
 === Intro
 
 * Tekton
+** `Tekton` is a cloud-native framework to support generally the creation of CI/CD pipelines.
 
 * Tekton Trigger
+** `Trigger` enhance the Tekton architecture with the capability to react on (external) events and start a predefined `Pipeline`
+** Trigger introduced the following new CRDs
+*** `TriggerTemplate`: a template which will be used if a new event occurred. This template creates the relevant resources and trigger the pipeline
+*** `TriggerBinding`: a binding definition which extract from the event payload the relevant information/parameters which will be used in the TriggerTemplate
+*** `EventListener`: the entry point
 
 * Workspace
 ** used for internal storage of files during step executions
@@ -60,7 +66,7 @@ NAME                  AGE
 nodejs-build-deploy   5s
 
 
-$ oc apply -f pipelines/02_create_template.yaml
+$ oc apply -f pipelines/03_template.yaml
 triggertemplate.tekton.dev/nodejs-build-deploy-trigger-template created
 triggerbinding.tekton.dev/nodejs-build-deploy-trigger-binding created
 eventlistener.tekton.dev/nodejs-build-deploy-trigger-listener created
@@ -215,21 +221,26 @@ tekton-101                                NodePort    172.30.201.115   <none>   
 $ oc get routes
 NAME                                      HOST/PORT                                                                                     PATH   SERVICES                                  PORT            TERMINATION   WILDCARD
 el-nodejs-build-deploy-trigger-listener   el-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-56ea.sandbox779.opentlc.com          el-nodejs-build-deploy-trigger-listener   http-listener                 None
-tekton-101                                tekton-101-tekton-101.apps.cluster-56ea.sandbox779.opentlc.com                                       tekton-101                                5050-tcp                      None
+tekton-101                                tekton-101-tekton-101.apps.cluster-56ea.sandbox779.opentlc.com                                       tekton-101                                5000-tcp                      None
 
-
+$ curl -s "$(oc  get route tekton-101 --template='http://{{.spec.host}}')"
+Hello from NodeJS Playground!
 ----
 
 
 image:static/PipelineRuns.png[Overview PipelineRuns in OpenShift WebConsole]
 
+image:static/PipelineRunDetails.png[One PipelineRun in OpenShift WebConsole]
+
 * Direct Webhook Call
+** tbd
 
 
 
 === Clean up
 
 Currently the OpenShift Pipeline does not clean up old pipeline runs.
+* Job to cleanup old PipelineRuns
 
 == References
 
