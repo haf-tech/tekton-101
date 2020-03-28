@@ -197,6 +197,29 @@ image:static/PipelineRuns.png[Overview PipelineRuns in OpenShift WebConsole]
 
 * Direct Webhook Call
 
+
+=== Workarounds
+
+The OpenShift CLI does not recognize well all arguments and parameters
+
+[source,yaml]
+----
+params:       
+    - name: ARGS
+      value: 
+      - "apply -f $(params.k8s_manifests)"
+----
+Results in `Error: unknown command "apply -f k8s" for "oc"`
+Also
+----
+params:       
+    - name: ARGS
+      value: 
+      - "apply"
+      - "-f"
+      - $(params.k8s_manifests)"
+----
+
 === Clean up
 
 Currently the OpenShift Pipeline does not clean up old pipeline runs.
