@@ -22,7 +22,7 @@ spec:
   - name: k8s_manifests
     type: string
     description: k8s deployment manifest directory
-    default: 'k8s'
+    default: "k8s"
   # ###### Tasks 
   tasks:
   - name: nodejs-build-image
@@ -61,7 +61,6 @@ spec:
     params:       
     - name: ARGS
       value: 
-      - "apply"
-      - "-f $(params.k8s_manifests)"
+      - "apply -f $(params.k8s_manifests)"
     runAfter:
     - nodejs-build-image

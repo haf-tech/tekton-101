@@ -15,6 +15,11 @@ OpenShift Pipelines Operator version 0.10.7
 
 * Tekton Trigger
 
+* Workspace
+** used for internal storage of files during step executions
+** a convention exists, that PipelineResources will be placed in sub directories with the name of the parameter name. E.g. the git repository will be cloned into `/workspace/git-src` if the git parameter is `git-src`.
+
+
 
 
 
@@ -192,7 +197,9 @@ image:static/PipelineRuns.png[Overview PipelineRuns in OpenShift WebConsole]
 
 * Direct Webhook Call
 
+=== Clean up
 
+Currently the OpenShift Pipeline does not clean up old pipeline runs.
 
 == References
 
