@@ -51,5 +51,7 @@ spec:
     params:       
     - name: ARGS
       value: 
-      - 'apply -f'
-      - $(params.k8s_manifests)
+      - "apply -f"
+      - "$(params.k8s_manifests)"
+    runAfter:
+    - nodejs-build-image
