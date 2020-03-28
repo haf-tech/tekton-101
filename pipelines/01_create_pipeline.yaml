@@ -44,6 +44,12 @@ spec:
     # nodejs version
     - name: VERSION
       value: "$(params.nodejs-version)"
+  - name: debug
+    taskRef:
+      name: debug
+      kind: Task
+    runAfter:
+    - nodejs-build-image
   - name: nodejs-general-deploy
     taskRef:
       name: openshift-client

@@ -1,0 +1,17 @@
+# Common Tasks
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: debug
+spec:
+  steps:
+  - name: list-workspace-files
+    image: ubuntu
+    command:
+    - /bin/bash
+    args:
+    - -c
+    - |
+      set -ex
+      find /workspace
