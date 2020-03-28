@@ -48,6 +48,10 @@ spec:
     taskRef:
       name: debug
       kind: Task
+    resources:      
+      inputs:      
+      - name: source
+        resource: git-repo 
     runAfter:
     - nodejs-build-image
   - name: nodejs-general-deploy
