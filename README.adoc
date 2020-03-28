@@ -1,0 +1,123 @@
+= Tekton 101
+:toc: macro
+:toclevels: 4
+
+toc::[]
+
+== Overview
+
+
+OpenShift Pipelines Operator version 0.10.7
+
+=== Intro
+
+* Tekton
+
+* Tekton Trigger
+
+
+
+
+=== Preparations
+
+* OpenShift 4 Cluster
+** link:https://www.ibm.com/uk-en/cloud/openshift[Red Hat OpenShift on IBM Cloud]
+
+* Install OpenShift Pipeline
+** Open OpenShift WebConsole
+** Select `Operators` > `OperatorHub`
+** Search for `OpenShift Pipelines Operator`
+** Select Operator and install, with default settings and `subscribe`
+** Verify the state `Running` pods in `openshift-pipelines` namespace
+** Reload the OpenShift WebConsole and verify if the menu item `Pipelines` exists
+
+
+* Permissions
+** `oc get serviceaccount pipeline`
+** OpenShift Pipeline has this serviceaccount `pipeline` by default.
+** All our `EventListener` will use this serviceaccount
+
+* GitHub Secret
+** Not relevant cause the GitHub repository is public and not token is needed to pull the code
+
+* Tekton Pipeline and Task definitions
+
+.Create project, pipeline and trigger resources
+----
+$ oc new-project tekton-101
+
+$ oc apply -f pipelines/01_create_pipeline.yaml
+pipeline.tekton.dev/nodejs-build-deploy created
+
+$ oc get pipeline
+NAME                  AGE
+nodejs-build-deploy   5s
+
+
+$ oc apply -f pipelines/02_create_template.yaml
+triggertemplate.tekton.dev/nodejs-build-deploy-trigger-template created
+triggerbinding.tekton.dev/nodejs-build-deploy-trigger-binding created
+eventlistener.tekton.dev/nodejs-build-deploy-trigger-listener created
+
+$ oc get triggertemplate
+NAME                                   AGE
+nodejs-build-deploy-trigger-template   54s
+----
+
+To register the GitHub Webhook is an external reachable URL from the service endpoint of the `EventListener` needed.
+
+.Expose route for GitHub Webhook registration
+----
+$ oc get svc
+NAME                                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+el-nodejs-build-deploy-trigger-listener   ClusterIP   172.30.61.224   <none>        8080/TCP   4m57s
+
+$ oc expose svc el-nodejs-build-deploy-trigger-listener
+route.route.openshift.io/el-nodejs-build-deploy-trigger-listener exposed
+
+$ echo "$(oc  get route el-nodejs-build-deploy-trigger-listener --template='http://{{.spec.host}}')"
+http://el-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-56ea.sandbox779.opentlc.com
+----
+
+
+
+
+* Volume, PVC
+** na
+
+* Register in GitHub the Webhook
+** Select the repository in GitHub
+** Select `Settings` > `Webhooks`
+** Press `Add Webhook`
+** Enter the URL of the `EventListener`
+** Set Content-Type to `application/json`
+** Let the default configuration, like only `push` events
+** Pres `Add Webhook`
+* Verify the GitHub Webhook
+** Select `Settings` > `Webhooks`
+** Select the listed Webhook URL
+** Check the output in `Recent Deliveries`, the last push should be positive like `202`
+
+
+=== Testing
+
+* GitHub Commit
+
+* Direct Webhook Call
+
+
+
+== References
+
+* Tekton TriggerTemplate: link:https://github.com/tektoncd/triggers/blob/master/docs/triggertemplates.md[]
+
+== License
+
+This article and project are licensed under the Apache License, Version 2.
+Separate third-party code objects invoked within this code pattern are licensed by their respective providers pursuant
+to their own separate licenses. Contributions are subject to the
+link:https://developercertificate.org/[Developer Certificate of Origin, Version 1.1] and the
+link:https://www.apache.org/licenses/LICENSE-2.0.txt[Apache License, Version 2].
+
+See also link:https://www.apache.org/foundation/license-faq.html#WhatDoesItMEAN[Apache License FAQ]
+.
