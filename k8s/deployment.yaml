@@ -1,0 +1,27 @@
+# Tekton-101: Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tekton-101
+  name: tekton-101
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tekton-101
+  template:
+    metadata:
+      labels:
+        app: tekton-101
+    spec:
+      containers:
+        - image: tekton-101:latest
+          imagePullPolicy: Always
+          name: tekton-101
+          ports:
+            - containerPort: 5000
+              protocol: TCP
+          env:
+            - name: TEKTON_101_ENV_EXAMPLE
+              value: "env value"

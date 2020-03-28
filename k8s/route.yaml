@@ -1,0 +1,14 @@
+# Tekton-101: Route
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: tekton-101
+  name: tekton-101
+spec:
+  port:
+    targetPort: 5050-tcp
+  to:
+    kind: Service
+    name: tekton-101
+    weight: 100

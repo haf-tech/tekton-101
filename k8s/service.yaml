@@ -1,0 +1,16 @@
+# Tekton-101: Service
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tekton-101
+  name: tekton-101
+spec:
+  type: NodePort
+  ports:
+    - name: 5000-tcp
+      port: 5000
+      targetPort: 5000
+      protocol: TCP
+  selector:
+    app: tekton-101

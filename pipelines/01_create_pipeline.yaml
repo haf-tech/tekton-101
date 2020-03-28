@@ -2,6 +2,7 @@
 # Creates a pipeline to build and update a nodejs application
 # Referencing tasks from the OpenShift 4 Pipeline catalog:
 # s2i-nodejs: to build, package and push
+# nodejs-general-deploy: to deploy the application using the manifest definitions from the repo
 apiVersion: tekton.dev/v1alpha1
 kind: Pipeline
 metadata:
@@ -18,6 +19,10 @@ spec:
     type: string
     description: nodejs version, default 10
     default: '10'
+  - name: k8s_manifests
+    type: string
+    description: k8s deployment manifest directory
+    default: 'k8s'
   # ###### Tasks 
   tasks:
   - name: nodejs-build-image
@@ -39,3 +44,12 @@ spec:
     # nodejs version
     - name: VERSION
       value: "$(params.nodejs-version)"
+  - name: nodejs-general-deploy
+    taskRef:
+      name: openshift-client
+      kind: ClusterTask
+    params:       
+    - name: ARGS
+      value: 
+      - 'apply -f'
+      - $(params.k8s_manifests)
