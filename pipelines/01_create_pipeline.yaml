@@ -52,8 +52,8 @@ spec:
     - nodejs-build-image
   - name: nodejs-general-deploy
     taskRef:
-      name: openshift-client
-      kind: ClusterTask
+      name: openshift-cli
+      kind: Task
     params:       
     - name: ARGS
       value: 

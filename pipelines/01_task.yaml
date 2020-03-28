@@ -15,3 +15,26 @@ spec:
     - |
       set -ex
       find /workspace
+---
+# Enhancement of the ClusterTask openshift-client with workspace support
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: openshift-cli
+spec:
+  inputs:
+    params:
+      - default:
+          - help
+        description: The OpenShift CLI arguments to run
+        name: ARGS
+        type: array
+  steps:
+    - name: oc
+      image: 'quay.io/openshift/origin-cli:latest'      
+      args:
+        - $(inputs.params.ARGS)
+      command:
+        - /usr/bin/oc      
+      workingDir: /workspace/source
+      resources: {}
