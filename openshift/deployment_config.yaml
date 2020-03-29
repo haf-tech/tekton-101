@@ -10,16 +10,16 @@ spec:
   selector:
     name: tekton-101
   strategy:
-    type: Recreate
-    recreateParams:
-      timeoutSeconds: 20
-      post:
-        failurePolicy: Ignore
-        tagImages:
-        - containerName: tekton-101
-          to:
-            kind: ImageStreamTag
-            name: tekton-101:latest
+    type: Rolling
+    rollingParams:
+      timeoutSeconds: 60
+#      post:
+#        failurePolicy: Ignore
+#        tagImages:
+#        - containerName: tekton-101
+#          to:
+#            kind: ImageStreamTag
+#            name: tekton-101:latest
   template:
     metadata:
       labels:
