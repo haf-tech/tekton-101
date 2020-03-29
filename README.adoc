@@ -1,13 +1,32 @@
 = Tekton 101
 :toc: macro
 :toclevels: 4
+:sectanchors:
 
 toc::[]
 
 == Overview
 
+Tekton ...
+[quote, Tekton, 'https://github.com/tektoncd/pipeline/tree/master/docs[Tekton Docu]']
+----
+ [...] defines a set of Kubernetes Custom Resources that act as building blocks from which you can assemble CI/CD pipelines.
+----
 
-OpenShift Pipelines Operator version 0.10.7
+It provides the capabilities to automate the most needed activities to build, package, push and deploy a cloud-native application with the help project specific CI/CD pipelines.
+link:https://github.com/tektoncd/pipeline[Tekton] is primarily a framework and only with the re-usable tasks and pipelines the power becomes visible. There are currently the following catalogs holding different re-usable fragments
+
+* link:https://github.com/tektoncd/catalog[Tekton catalog]
+* link:https://github.com/openshift/pipelines-catalog[OpenShift Pipeline Catalog]
+* link:https://github.com/kabanero-io/kabanero-pipelines[Kabanero Pipelines]
+
+This article considers the Tekton integration in OpenShift 4 named link:https://www.openshift.com/learn/topics/pipelines[OpenShift Pipelines] (version 0.10.7, March 2020).
+The article is divided in the following sections
+
+* <<base_pipeline,Base pipeline usage>>: handles the complete pipeline to build, package, push and deploy an application from a GitHub repository
+* <<advanced_pipeline,Advanced pipeline usage>>: extends the base pipeline with additional topics like resource sharing, private registry etc.
+* <<additional_topics,Additional topics>>: Further remaining topics like housekeeping will be handled in the last chapter.
+
 
 === Intro
 
@@ -25,8 +44,8 @@ OpenShift Pipelines Operator version 0.10.7
 ** used for internal storage of files during step executions
 ** a convention exists, that PipelineResources will be placed in sub directories with the name of the parameter name. E.g. the git repository will be cloned into `/workspace/git-src` if the git parameter is `git-src`.
 
-
-
+[#base_pipeline]
+== Base Pipeline
 
 
 === Preparations
@@ -235,7 +254,25 @@ image:static/PipelineRunDetails.png[One PipelineRun in OpenShift WebConsole]
 * Direct Webhook Call
 ** tbd
 
+[#advanced_pipeline]
+== Advanced Pipeline
 
+This chapter handles advanced topics like
+
+* Usage of Persistent Volume
+** request always new PV
+** re-use PV
+* shared data using workspaces
+** workspace and pipeline/task
+** conventions
+* usage of private Image Registries
+** link:https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account[add PullSecret]
+* Collect results
+
+[#additional_topics]
+== Additional topics
+
+This chapter handles additional topics which are relevant for Day-2 work.
 
 === Clean up
 
@@ -244,6 +281,7 @@ Currently the OpenShift Pipeline does not clean up old pipeline runs.
 
 == References
 
+* Tekton: link:https://github.com/tektoncd/pipeline[]
 * Tekton TriggerTemplate: link:https://github.com/tektoncd/triggers/blob/master/docs/triggertemplates.md[]
 
 == License
