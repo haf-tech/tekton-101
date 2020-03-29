@@ -301,7 +301,8 @@ This chapter handles additional topics which are relevant for Day-2 work.
 === Clean up
 
 Currently the OpenShift Pipeline does not clean up old pipeline runs.
-* Job to cleanup old PipelineRuns
+
+* Job to cleanup old PipelineRuns. Requirement is not new, see open link:https://github.com/tektoncd/experimental/issues/479[issue].
 
 == References
 
