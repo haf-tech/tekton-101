@@ -19,7 +19,9 @@ spec:
   - name: git-repo-name
     description: The name of the deployment/application
   - name: project-name
-    description: The project name/namespace  
+    description: The project name/namespace 
+  - name: project-manifests
+    description: Project deployment manifest dir 
 
   resourcetemplates:
   - apiVersion: tekton.dev/v1alpha1
@@ -65,6 +67,8 @@ spec:
         value: '10'
       - name: deployment-name
         value: $(params.git-repo-name)
+      - name: k8s_manifests
+        value: $(params.project-manifests)  
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: TriggerBinding
@@ -80,6 +84,8 @@ spec:
     value: $(body.repository.name)
   - name: project-name
     value: 'tekton-101'
+  - name: project-manifests
+    value: 'openshift'
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: EventListener

@@ -3,6 +3,8 @@ apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: tekton-101-ingress
+  labels:
+    app: tekton-101
 spec:  
   rules:
   - http:

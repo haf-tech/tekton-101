@@ -21,7 +21,7 @@ spec:
     default: '10'
   - name: k8s_manifests
     type: string
-    description: k8s deployment manifest directory
+    description: project deployment manifest directory
     default: "k8s"
   # ###### Tasks 
   tasks:

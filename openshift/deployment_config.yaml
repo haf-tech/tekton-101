@@ -3,6 +3,8 @@ apiVersion: v1
 kind: DeploymentConfig
 metadata:
   name: tekton-101-deployment-config
+  labels:
+    app: tekton-101
 spec:
   replicas: 1
   selector:
@@ -22,6 +24,7 @@ spec:
     metadata:
       labels:
         name: tekton-101
+        app: tekton-101
     spec:
       containers:
       - image: image-registry.openshift-image-registry.svc:5000/tekton-101/tekton-101:latest
@@ -32,8 +35,7 @@ spec:
           protocol: TCP
         resources:
           limits:
-            cpu: 100m
-            memory: 512MiB
+            memory: 256Mi
         env:
         - name: TEKTON_101_ENV_EXAMPLE
           value: "env value"
