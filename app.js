@@ -9,11 +9,12 @@
 const app = require('express')()
 
 app.set('port', (process.env.PORT || 5000))
-//app.use(express.static(__dirname + '/public'))
+
+app.set('envTektonExample', (process.env.TEKTON_101_ENV_EXAMPLE || 'default value'))
 
 
 app.get('/', (req, res) => {
-  res.send("Hello from NodeJS Playground!");
+  res.send("Hello from NodeJS Playground! TEKTON_101_ENV_EXAMPLE=" + app.get('envTektonExample'));
 });
  
 /*
