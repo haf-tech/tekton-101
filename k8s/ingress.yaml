@@ -1,0 +1,13 @@
+# Tekton-101: Ingress
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: tekton-101-ingress
+spec:  
+  rules:
+  - http:
+      paths:
+      - path: /
+        backend:
+          serviceName: tekton-101
+          servicePort: 5000
