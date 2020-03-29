@@ -61,6 +61,8 @@ The idea of the pipeline is, that a new event (like a Git Push commit) will trig
 The `nodejs-general-deploy` runs after the `s2i-nodejs` task and (re-)applies the kubernetes manifest files in link:k8s[] directory. This results in a new or updated `Deployment`, `Route` and `Service` objects.
 After a successful pipeline run the application is updated and up and running.
 
+The presented pipeline here is only for the first task solution/application specific - as there is a technology stack dependency (here: nodejs).
+
 === Preparations
 
 * OpenShift 4 Cluster
