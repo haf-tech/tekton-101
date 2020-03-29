@@ -47,6 +47,19 @@ The article is divided in the following sections
 [#base_pipeline]
 == Base Pipeline
 
+The base pipeline consists of 3 tasks
+
+* `nodejs-build-image`: a re-use of the existing `ClusterTask` `s2i-nodejs` to build, package and push nodejs applications
+* `debug`: a common task to list all files in the workspace (which contains the Git repository)
+* `nodejs-general-deploy`: uses the enhanced `openshift-cli` task to deploy the application
+
+
+image:static/PipelineDetails.png[Pipeline definition]
+
+All definitions are in the directory link:pipelines/base[].
+The idea of the pipeline is, that a new event (like a Git Push commit) will trigger the pipeline. The first task is the execution of the existing `s2i-nodejs` which will receive the Git repository and the expected image stream name/value. The resulting docker image will be pushed to the internal registry in the current namespace.
+The `nodejs-general-deploy` runs after the `s2i-nodejs` task and (re-)applies the kubernetes manifest files in link:k8s[] directory. This results in a new or updated `Deployment`, `Route` and `Service` objects.
+After a successful pipeline run the application is updated and up and running.
 
 === Preparations
 
@@ -76,19 +89,19 @@ The article is divided in the following sections
 ----
 $ oc new-project tekton-101
 
-$ oc apply -f pipelines/01_tasks.yaml
-$ oc apply -f pipelines/01_pipeline.yaml
-pipeline.tekton.dev/nodejs-build-deploy created
+$ oc apply -f pipelines/base/
+task.tekton.dev/debug configured
+task.tekton.dev/openshift-cli unchanged
+pipeline.tekton.dev/nodejs-build-deploy unchanged
+triggertemplate.tekton.dev/nodejs-build-deploy-trigger-template unchanged
+triggerbinding.tekton.dev/nodejs-build-deploy-trigger-binding unchanged
+eventlistener.tekton.dev/nodejs-build-deploy-trigger-listener unchanged
+
 
 $ oc get pipeline
 NAME                  AGE
 nodejs-build-deploy   5s
 
-
-$ oc apply -f pipelines/03_template.yaml
-triggertemplate.tekton.dev/nodejs-build-deploy-trigger-template created
-triggerbinding.tekton.dev/nodejs-build-deploy-trigger-binding created
-eventlistener.tekton.dev/nodejs-build-deploy-trigger-listener created
 
 $ oc get triggertemplate
 NAME                                   AGE
@@ -128,10 +141,12 @@ http://el-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-56ea.sand
 * Verify the GitHub Webhook
 ** Select `Settings` > `Webhooks`
 ** Select the listed Webhook URL
-** Check the output in `Recent Deliveries`, the last push should be positive like `202`
+** Check the output in `Recent Deliveries`, the last push should be positive like `202` or `201`
 
 
 === Testing
+
+The test includes the push of a Git change which will trigger immediately a new pipeline run in OpenShift, because of the Webhook which send the event to the EventListener.
 
 * GitHub Commit
 ** Push a new commit to the repository
@@ -159,15 +174,22 @@ NAME                            SUCCEEDED   REASON    STARTTIME   COMPLETIONTIME
 build-deploy-tekton-101-wwsh7   Unknown     Running   2m48s
 
 $ oc get pods
-NAME                                                              READY   STATUS    RESTARTS   AGE
-build-deploy-tekton-101-wwsh7-nodejs-build-image-24g9b-po-fgltb   3/6     Running   0          3m40s
-el-nodejs-build-deploy-trigger-listener-57d5686ccd-7s6h6          1/1     Running   0          22m
+NAME                                                              READY   STATUS      RESTARTS   AGE
+build-deploy-tekton-101-4g5pq-debug-b9d5p-pod-vb8w7               0/1     Completed   0          15h
+build-deploy-tekton-101-4g5pq-nodejs-build-image-tt5xr-po-v96g7   0/6     Completed   0          15h
+build-deploy-tekton-101-4g5pq-nodejs-general-deploy-mln6r-lbhcw   0/2     Completed   0          15h
+...
+el-nodejs-build-deploy-trigger-listener-57d5686ccd-7s6h6          1/1     Running     0          18h
+...
+tekton-101-59cf598599-v27xr                                       1/1     Running     0          15h
 
-$ oc logs -f build-deploy-tekton-101-wwsh7-nodejs-build-image-24g9b-po-fgltb
+
+$ oc logs -f build-deploy-tekton-101-4g5pq-nodejs-build-image-tt5xr-po-v96g7
 Error from server (BadRequest): a container name must be specified for pod build-deploy-tekton-101-wwsh7-nodejs-build-image-24g9b-po-fgltb, choose one of: [step-create-dir-image-gl7vp step-git-source-git-repo-tekton-101-wwsh7-wz8pc step-generate step-build step-push step-image-digest-exporter-lv5jh] or one of the init containers: [credential-initializer working-dir-initializer place-tools]
 
+
 # Display the logs for the Docker Build step
-$ oc logs -f build-deploy-tekton-101-wwsh7-nodejs-build-image-24g9b-po-fgltb -c step-build
+$ oc logs -f build-deploy-tekton-101-4g5pq-nodejs-build-image-tt5xr-po-v96g7 -c step-build
 {"level":"info","ts":1585410738.4441009,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: \"KO_DATA_PATH\" does not exist or is empty"}
 STEP 1: FROM registry.access.redhat.com/rhscl/nodejs-10-rhel7
 Getting image source signatures
