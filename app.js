@@ -136,7 +136,13 @@ function callBackendService(ret, req, res) {
 
 
 app.listen(app.get('port'), function() {
-  console.log(process.env.npm_package_version)
+  console.log("App.Version: " + process.env.npm_package_version)
+  console.log("ENV.TEKTON_101: " + app.get('envTektonName'))
+  console.log("ENV.TEKTON_101_ENV_EXAMPLE: " + app.get('envTektonExample'))
+  console.log("ENV.TEKTON_101_ENV_DELAY: " + app.get('envDelay'))
+  console.log("ENV.TEKTON_101_ENV_BACKEND_SERVICE: " + app.get('envBackendService'))
+  console.log("ENV.TEKTON_101_ENV_BACKEND_SERVICE_DELAY: " + app.get('envBackendServiceDelay'))
+
   console.log("Node app is running at localhost:" + app.get('port'))
 })
 
