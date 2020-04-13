@@ -42,8 +42,6 @@
  * ******************************
 */
 
-const {app_version} = require('./package.json');
-
 const promClient = require('prom-client');
 const promBundle = require("express-prom-bundle");
 const app = require('express')()
@@ -80,7 +78,7 @@ var config = {
 var metrics = new PrometheusMetricsFactory(promClient, config.serviceName);
 var options = {
   tags: {
-    'tekton101.version': '${app_version}',
+    'tekton101.version': process.env.npm_package_version,
   },
   metrics: metrics
 };
@@ -89,7 +87,7 @@ var tracer = jaeger.initTracerFromEnv(config, options);
 // ############# Entry points
 app.get('/', (req, res) => {
   
-  var ret = "Hello from NodeJS Playground! TEKTON_101_ENV_EXAMPLE=" + app.get('envTektonExample');
+  var ret = "[" + app.get('envTektonName') + "]: Hello from NodeJS Playground! TEKTON_101_ENV_EXAMPLE=" + app.get('envTektonExample');
 
   // simulated processing
   var processDelay = app.get('envDelay');
