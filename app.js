@@ -100,16 +100,14 @@ if(app.get('envTracingEnabled')) {
 // ############# Entry points
 app.get('/info', (req, res) => {
   
-  console.log('1')
+
   var ret = "[" + app.get('envTektonName') + "]: Hello from NodeJS Playground! TEKTON_101_ENV_EXAMPLE=" + app.get('envTektonExample');
-  console.log('2')
+
   // simulated processing
   var processDelay = app.get('envDelay');
-  console.log('3')
   sleep(processDelay).then(() => {
-    console.log('4')
+    
     ret = callBackendService(ret, req, res);
-    console.log('5')
   });
   
 });
@@ -119,14 +117,13 @@ app.get('/info', (req, res) => {
 const sleep = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
 
 function callBackendService(ret, req, res) {
-  console.log('6')
+  
   var backendService = app.get('envBackendService');
   if (typeof backendService !== 'undefined' && backendService !== null && backendService !== '') {
-    console.log('7')
     // wait before calling backend service
     var backendServiceDelay = app.get('envBackendServiceDelay');
     sleep(backendServiceDelay).then(() => {
-      console.log('8')
+  
       axios.get(backendService)
             .then(function (response) {
               console.log(response.status);
@@ -138,15 +135,18 @@ function callBackendService(ret, req, res) {
               ret = `${ret}\nBackendService Failed: ${error.message}`;
             })
             .finally(function () {
-              console.log('9')
+  
               // send the response to the client
               res.send(ret);
             });
     });
     
 
+  } else {
+    // send the response to the client
+    res.send(ret);
   }
-  console.log('10')
+  
   return ret;
 }
 
