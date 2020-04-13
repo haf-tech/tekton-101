@@ -23,6 +23,10 @@
  * TEKTON_101_ENV_BACKEND_SERVICE_DELAY
  * in milliseconds, default 0, to delay the backend service call
  * 
+ * TEKTON_101_ENV_TRACING_ENABLED
+ * Default false. Enable OpenTracing or not.
+ * 
+ * 
  * Integrated libs
  * - Prometheus
  * - Jaeger for OpenTracing (linked to Prometheus)
@@ -70,6 +74,8 @@ app.set('envBackendService', (process.env.TEKTON_101_ENV_BACKEND_SERVICE || ''))
 
 app.set('envBackendServiceDelay', (process.env.TEKTON_101_ENV_BACKEND_SERVICE_DELAY || 0))
 
+app.set('envTracingEnabled', (process.env.TEKTON_101_ENV_TRACING_ENABLED || false))
+
 // ############# Jaeger configuration
 var appName = app.get('envTektonName');
 var config = {
@@ -82,7 +88,12 @@ var options = {
   },
   metrics: metrics
 };
-var tracer = jaeger.initTracerFromEnv(config, options);
+
+if(app.get('envTracingEnabled')) {
+  console.log('tracing enabled, initializing...')
+  var tracer = jaeger.initTracerFromEnv(config, options);
+}
+
 
 // ############# Entry points
 app.get('/', (req, res) => {
@@ -142,7 +153,8 @@ app.listen(app.get('port'), function() {
   console.log("ENV.TEKTON_101_ENV_DELAY: " + app.get('envDelay'))
   console.log("ENV.TEKTON_101_ENV_BACKEND_SERVICE: " + app.get('envBackendService'))
   console.log("ENV.TEKTON_101_ENV_BACKEND_SERVICE_DELAY: " + app.get('envBackendServiceDelay'))
-
+  console.log("ENV.TEKTON_101_ENV_TRACING_ENABLED: " + app.get('envTracingEnabled'))
+  
   console.log("Node app is running at localhost:" + app.get('port'))
 })
 
