@@ -98,9 +98,8 @@ if(app.get('envTracingEnabled')) {
 
 
 // ############# Entry points
-app.get('/info', (req, res) => {
+app.get('/', (req, res) => {
   
-
   var ret = "[" + app.get('envTektonName') + "]: Hello from NodeJS Playground! TEKTON_101_ENV_EXAMPLE=" + app.get('envTektonExample');
 
   // simulated processing
