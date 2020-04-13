@@ -63,6 +63,7 @@ app.use(metricsMiddleware);
 
 // ############# Application configuration
 app.set('port', (process.env.PORT || 5000))
+app.set('ip', (process.env.IP || '0.0.0.0'))
 
 app.set('envTektonName', (process.env.TEKTON_101_ENV_NAME || 'TEKTON_101'))
 
@@ -146,7 +147,7 @@ function callBackendService(ret, req, res) {
 
 
 
-app.listen(app.get('port'), function() {
+app.listen(app.get('port'), app.get('ip'), function() {
   console.log("App.Version: " + process.env.npm_package_version)
   console.log("ENV.TEKTON_101: " + app.get('envTektonName'))
   console.log("ENV.TEKTON_101_ENV_EXAMPLE: " + app.get('envTektonExample'))
