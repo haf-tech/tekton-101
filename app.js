@@ -50,10 +50,6 @@ const promClient = require('prom-client');
 const promBundle = require("express-prom-bundle");
 const app = require('express')()
 const axios = require('axios');
-const jaeger = require('jaeger-client');
-const jaegerInitTracer = jaeger.initTracer;
-var PrometheusMetricsFactory = jaeger.PrometheusMetricsFactory;
-
 
 // ############# Prometheus 
 // include HTTP method and URL path into the labels
@@ -78,19 +74,24 @@ app.set('envBackendServiceDelay', (process.env.TEKTON_101_ENV_BACKEND_SERVICE_DE
 app.set('envTracingEnabled', (process.env.TEKTON_101_ENV_TRACING_ENABLED || false))
 
 // ############# Jaeger configuration
-var appName = app.get('envTektonName');
-var config = {
-  serviceName: app.get('envTektonName'),
-};
-var metrics = new PrometheusMetricsFactory(promClient, config.serviceName);
-var options = {
-  tags: {
-    'tekton101.version': process.env.npm_package_version,
-  },
-  metrics: metrics
-};
-
 if(app.get('envTracingEnabled')) {
+
+  const jaeger = require('jaeger-client');
+  const jaegerInitTracer = jaeger.initTracer;
+  var PrometheusMetricsFactory = jaeger.PrometheusMetricsFactory;
+
+  var appName = app.get('envTektonName');
+  var config = {
+    serviceName: app.get('envTektonName'),
+  };
+  var metrics = new PrometheusMetricsFactory(promClient, config.serviceName);
+  var options = {
+    tags: {
+      'tekton101.version': process.env.npm_package_version,
+    },
+    metrics: metrics
+  };
+
   console.log('tracing enabled, initializing...')
   var tracer = jaeger.initTracerFromEnv(config, options);
 }
