@@ -57,6 +57,10 @@ const metricsMiddleware = promBundle({includeMethod: true, includePath: true});
 
 app.use(metricsMiddleware);
 
+
+const counterUserAgent = new promClient.Counter({name: 'http_request_tekton101_user_agent_total', help: 'Tekton101: User Agents', labelNames: ['ua']});
+
+
 // ############# Application configuration
 app.set('port', (process.env.PORT || 5000))
 app.set('ip', (process.env.IP || '0.0.0.0'))
@@ -101,6 +105,11 @@ if(app.get('envTracingEnabled')) {
 app.get('/', (req, res) => {
   
   var ret = "[" + app.get('envTektonName') + "]: Hello from NodeJS Playground! TEKTON_101_ENV_EXAMPLE=" + app.get('envTektonExample');
+  var userAgent = req.get('User-Agent');
+  console.log('user-agent: ' + userAgent);
+
+  // Prometheus Metric: inc and set the user agent
+  counterUserAgent.labels(userAgent).inc();
 
   // simulated processing
   var processDelay = app.get('envDelay');
