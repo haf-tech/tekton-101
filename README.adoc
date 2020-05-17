@@ -155,7 +155,9 @@ http://el-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-56ea.sand
 
 
 
-=== Testing
+=== Testing 
+
+==== Push and Deployment via GitHub Webhook
 
 The test includes the push of a Git change which will trigger immediately a new pipeline run in OpenShift, because of the Webhook which send the event to the EventListener.
 
@@ -276,16 +278,50 @@ el-nodejs-build-deploy-trigger-listener   el-nodejs-build-deploy-trigger-listene
 tekton-101                                tekton-101-tekton-101.apps.cluster-56ea.sandbox779.opentlc.com                                       tekton-101                                5000-tcp                      None
 
 $ curl -s "$(oc get route tekton-101 --template='http://{{.spec.host}}')"
-Hello from NodeJS Playground!
+[TEKTON_101]: Hello from NodeJS Playground! TEKTON_101_ENV_EXAMPLE=env value.
 ----
 
 
-image:static/PipelineRuns.png[Overview PipelineRuns in OpenShift WebConsole]
+image:static/PipelineRun_List.png[Overview PipelineRuns in OpenShift WebConsole]
 
-image:static/PipelineRunDetails.png[One PipelineRun in OpenShift WebConsole]
+image:static/PipelineRun_Progress.png[One PipelineRun in OpenShift WebConsole, Running]
 
-* Direct Webhook Call
-** tbd
+image:static/PipelineRun_Done.png[One PipelineRun in OpenShift WebConsole, Done successfully]
+
+
+The GitHub Webhook triggers the Pipeline in OpenShift after the push commit. The result is new build and deployed application in OpenShift Cluster, with a registered route.
+
+==== Deployment via direct EventListener call
+
+The GitHub Webhook calls the `EventListener` entry point with a json payload. To simulate the GitHub Webhook call the defined `EventListerner` route with the following information
+
+* as POST
+* with content type `application/json`
+* with a GitHub Event header contains the expected event defined in the `EventListener`.`triggers.interceptors.github.eventTypes` (here: `push`)
+* the json payload with a minimum of the fields which are expected in `TriggerBinding`
+
+----
+$ curl -XPOST -H "Content-Type: application/json" -H "X-GitHub-Event: push" -d @pipelines/test/dummy_payload.json "$(oc  get route el-nodejs-build-deploy-trigger-listener --template='http://{{.spec.host}}')"
+{"eventListener":"nodejs-build-deploy-trigger-listener","namespace":"tekton-101","eventID":"zxhxc"}
+
+
+$ oc logs -f el-nodejs-build-deploy-trigger-listener-57d5686ccd-tlnlj
+...
+{"level":"info","logger":"eventlistener","caller":"sink/sink.go:147","msg":"params: %+v[{git-revision {string a5516c481f5b944b9be2872b37bfd23e8ed0acd6 []}} {git-repo-url {string https://github.com/haf-tech/tekton-101 []}} {git-repo-name {string tekton-101 []}} {project-name {string tekton-101 []}} {project-manifests {string openshift []}}]","knative.dev/controller":"eventlistener","/triggers-eventid":"zxhxc","/trigger":"nodejs-build-deploy-trigger-listener-t1"}
+{"level":"info","logger":"eventlistener","caller":"resources/create.go:91","msg":"Generating resource: kind: &APIResource{Name:pipelineresources,Namespaced:true,Kind:PipelineResource,Verbs:[delete deletecollection get list patch create update watch],ShortNames:[],SingularName:pipelineresource,Categories:[tekton tekton-pipelines],Group:tekton.dev,Version:v1alpha1,}, name: git-repo-tekton-101-6vz4l","knative.dev/controller":"eventlistener"}
+{"level":"info","logger":"eventlistener","caller":"resources/create.go:99","msg":"For event ID \"zxhxc\" creating resource tekton.dev/v1alpha1, Resource=pipelineresources","knative.dev/controller":"eventlistener"}
+....
+
+
+$ oc get pipelinerun
+NAME                            SUCCEEDED   REASON      STARTTIME   COMPLETIONTIME
+build-deploy-tekton-101-6vz4l   Unknown     Running     13s
+build-deploy-tekton-101-ssm6w   True        Succeeded   23m         20m
+----
+
+The call triggers a new `PipelineRun` which redeploys the application.
+This way allows to test and execute the pipeline without create a Git commit. 
+
 
 [#advanced_pipeline]
 == Advanced Pipeline
