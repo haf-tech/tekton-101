@@ -10,7 +10,7 @@
       {
         "id": "637e39517fedcd931f3f2e85d9d41a1f3a7d9623",
         "distinct": true,
-        "message": "This is commit message",
+        "message": "This is commit message #skip-pipeline# with skip command.",
         "timestamp": "2020-05-17T19:41:19+02:00",
         "url": "https://github.com/haf-tech/tekton-101/commit/637e39517fedcd931f3f2e85d9d41a1f3a7d9623"        
       }

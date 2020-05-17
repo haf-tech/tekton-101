@@ -99,7 +99,7 @@ spec:
     # CEL interceptor to skip the pipeline if message contains "#skip-pipeline#"
     - cel:
         filter: >-
-          (body.commits[0].message.indexOf('#skip-pipeline#') == -1)
+          (body.commits.all(c, !c.message.contains('#skip-pipeline#')))          
     - github:
         eventTypes: 
         - pull_request

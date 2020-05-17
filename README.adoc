@@ -326,6 +326,37 @@ This way allows to test and execute the pipeline without create a Git commit.
 [#advanced_pipeline]
 == Advanced Pipeline
 
+=== Skip PipelineRun
+
+In the case that not every git push commit should execute a `PipelineRun` is possible to integrate an additional pre-step to verify if the received event should trigger a run or not. For this, a new interceptor from type link:https://github.com/tektoncd/triggers/blob/master/docs/eventlisteners.md#cel-interceptors[`CEL`] will be introduced. CEL allows to filter and modify incoming events. 
+
+[source,yaml]
+----
+
+    - cel:
+       filter: >-
+         (body.commits.all(c, !c.message.contains('#skip-pipeline#')))  
+----
+
+The example above filters an events out that *not* match the condition (here: commit message contains `#skip-pipeline#`). The EventListener does not proceed with the event if the event payload contains a commit message with the fragment `#skip-pipeline#`. For testing this scenario use the `skip_payload.json` payload.
+
+----
+$ curl -XPOST -H "Content-Type: application/json" -H "X-GitHub-Event: push" -d @pipelines/test/skip_payload.json "$(oc  get route el-nodejs-build-deploy-trigger-listener --template='http://{{.spec.host}}')"
+----
+
+----
+$ oc logs -f el-nodejs-build-deploy-trigger-listener-57d5686ccd-tlnlj
+....
+
+{"level":"error","logger":"eventlistener","caller":"sink/sink.go:184","msg":"expression (body.commits.all(c, !c.message.contains('skip-pipeline')))           did not return true","knative.dev/controller":"eventlistener","/triggers-eventid":"w9m85","/trigger":"nodejs-build-deploy-trigger-listener-t1","stacktrace":"github.com/tektoncd/triggers/pkg/sink.Sink.executeInterceptors\n\t/go/src/github.com/tektoncd/triggers/pkg/sink/sink.go:184\ngithub.com/tektoncd/triggers/pkg/sink.Sink.processTrigger\n\t/go/src/github.com/tektoncd/triggers/pkg/sink/sink.go:129\ngithub.com/tektoncd/triggers/pkg/sink.Sink.HandleEvent.func1\n\t/go/src/github.com/tektoncd/triggers/pkg/sink/sink.go:93"}
+...
+----
+
+The EventListener cancel the processing, cause the filter of the `CEL` interceptor `did not return true`.
+
+
+=== Open
+
 This chapter handles advanced topics like
 
 * Usage of Persistent Volume
@@ -376,7 +407,7 @@ Tekton and especially Tekton is heavily under construction and optimizations. Ke
 == References
 
 * Tekton: link:https://github.com/tektoncd/pipeline[]
-* Tekton TriggerTemplate: link:https://github.com/tektoncd/triggers/blob/master/docs/triggertemplates.md[]
+* Tekton Trigger: link:https://github.com/tektoncd/triggers[]
 
 == License
 
