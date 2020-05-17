@@ -54,7 +54,7 @@ spec:
         resource: git-repo 
     runAfter:
     - nodejs-build-image
-  - name: nodejs-general-deploy
+  - name: custom-general-deploy
     taskRef:
       name: openshift-cli
       kind: Task

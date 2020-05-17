@@ -31,16 +31,19 @@ The article is divided in the following sections
 === Intro
 
 * Tekton
-** `Tekton` is a cloud-native framework to support generally the creation of CI/CD pipelines.
+** `Tekton` is a cloud-native framework to support generally the creation of CI/CD pipelines. For a detailed explanation of Tekton with all available Tekton entities see the link:https://github.com/tektoncd/pipeline/tree/master/docs#understanding-tekton-pipelines[Tekton GitHub docu].
+*** link:https://github.com/tektoncd/pipeline/blob/master/docs/pipelines.md[`Pipeline`] is the definition of the continuous integration flow, representing various ``Task``s. An instance of a `Pipeline` is a `PipelineRun`.
+*** link:https://github.com/tektoncd/pipeline/blob/master/docs/tasks.md[`Task`] is a collection of ``Step``s to achieve a certain state. An instance of a `Task` is a `TaskRun`.
+*** A `Pipeline` could contain and reference general ``Task``s and project specific definitions. One of key concepts of Tekton is the re-usability and this is reflected in the `ClusterTask` resource type and the possibility to reference a task definition.
 
 * Tekton Trigger
 ** `Trigger` enhance the Tekton architecture with the capability to react on (external) events and start a predefined `Pipeline`
 ** Trigger introduced the following new CRDs
-*** `TriggerTemplate`: a template which will be used if a new event occurred. This template creates the relevant resources and trigger the pipeline
-*** `TriggerBinding`: a binding definition which extract from the event payload the relevant information/parameters which will be used in the TriggerTemplate
-*** `EventListener`: the entry point
+*** link:https://github.com/tektoncd/triggers/blob/master/docs/triggertemplates.md[`TriggerTemplate`]: a template which will be used if a new event occurred. This template creates the relevant resources and trigger the pipeline
+*** link:https://github.com/tektoncd/triggers/blob/master/docs/triggerbindings.md[`TriggerBinding`]: a binding definition which extract from the event payload the relevant information/parameters which will be used in the TriggerTemplate
+*** link:https://github.com/tektoncd/triggers/blob/master/docs/eventlisteners.md[`EventListener`]: the entry point which retrieves the Event and uses the `TriggerBinding` to extract the parameters and delegate this to the `TriggerTemplate`.
 
-* Workspace
+* link:https://github.com/tektoncd/pipeline/blob/master/docs/workspaces.md[`Workspace`]
 ** used for internal storage of files during step executions
 ** a convention exists, that PipelineResources will be placed in sub directories with the name of the parameter name. E.g. the git repository will be cloned into `/workspace/git-src` if the git parameter is `git-src`.
 
@@ -51,17 +54,17 @@ The base pipeline consists of 3 tasks
 
 * `nodejs-build-image`: a re-use of the existing `ClusterTask` `s2i-nodejs` to build, package and push nodejs applications
 * `debug`: a common task to list all files in the workspace (which contains the Git repository)
-* `nodejs-general-deploy`: uses the enhanced `openshift-cli` task to deploy the application
+* `custom-general-deploy`: uses the enhanced `openshift-cli` task to deploy the application
 
 
 image:static/PipelineDetails.png[Pipeline definition]
 
 All definitions are in the directory link:pipelines/base[].
-The idea of the pipeline is, that a new event (like a Git Push commit) will trigger the pipeline. The first task is the execution of the existing `s2i-nodejs` which will receive the Git repository and the expected image stream name/value. The resulting docker image will be pushed to the internal registry in the current namespace.
-The `nodejs-general-deploy` runs after the `s2i-nodejs` task and (re-)applies the kubernetes manifest files in link:k8s[] directory. This results in a new or updated `Deployment`, `Route` and `Service` objects.
+The idea of the pipeline is, that a new event (like a Git Push commit) will trigger the pipeline. The first task is the execution of the existing `s2i-nodejs` task which will receive the Git repository and the expected image stream name/value. The resulting docker image will be pushed to the internal registry in the current namespace.
+The `custom-general-deploy` runs after the `s2i-nodejs` task and (re-)applies the kubernetes manifest files in link:k8s[] or link:openshift[]  directory. This results in a new or updated `Deployment`, `Route` and `Service` objects.
 After a successful pipeline run the application is updated and up and running.
 
-The presented pipeline here is only for the first task solution/application specific - as there is a technology stack dependency (here: nodejs).
+The presented pipeline here is a simplified but common definition. Only the first task is solution/application specific one - as there is a technology stack dependency (here: nodejs).
 
 === Preparations
 
@@ -85,6 +88,11 @@ The presented pipeline here is only for the first task solution/application spec
 * GitHub Secret
 ** Not relevant cause the GitHub repository is public and not token is needed to pull the code
 
+=== Create and Configure Pipeline
+
+This chapter handles the pipeline creation and some configuration, like the GitHub Webhook, so that any new push commit will trigger a new deployment.
+
+
 * Tekton Pipeline and Task definitions
 
 .Create project, pipeline and trigger resources
@@ -103,6 +111,12 @@ eventlistener.tekton.dev/nodejs-build-deploy-trigger-listener unchanged
 $ oc get pipeline
 NAME                  AGE
 nodejs-build-deploy   5s
+
+
+$ oc get task
+NAME            AGE
+debug           20s
+openshift-cli   20s
 
 
 $ oc get triggertemplate
@@ -126,24 +140,19 @@ http://el-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-56ea.sand
 ----
 
 
-
-
-* Volume, PVC
-** na
-** using `emptyDir`
-
 * Register in GitHub the Webhook
 ** Select the repository in GitHub
 ** Select `Settings` > `Webhooks`
 ** Press `Add Webhook`
-** Enter the URL of the `EventListener`
+** Enter the URL of the `EventListener` from above
 ** Set Content-Type to `application/json`
-** Let the default configuration, like only `push` events
+** Let the default configuration, and add e.g. only `push` events
 ** Pres `Add Webhook`
 * Verify the GitHub Webhook
 ** Select `Settings` > `Webhooks`
 ** Select the listed Webhook URL
 ** Check the output in `Recent Deliveries`, the last push should be positive like `202` or `201`
+
 
 
 === Testing
@@ -179,7 +188,7 @@ $ oc get pods
 NAME                                                              READY   STATUS      RESTARTS   AGE
 build-deploy-tekton-101-4g5pq-debug-b9d5p-pod-vb8w7               0/1     Completed   0          15h
 build-deploy-tekton-101-4g5pq-nodejs-build-image-tt5xr-po-v96g7   0/6     Completed   0          15h
-build-deploy-tekton-101-4g5pq-nodejs-general-deploy-mln6r-lbhcw   0/2     Completed   0          15h
+build-deploy-tekton-101-4g5pq-custom-general-deploy-mln6r-lbhcw   0/2     Completed   0          15h
 ...
 el-nodejs-build-deploy-trigger-listener-57d5686ccd-7s6h6          1/1     Running     0          18h
 ...
@@ -250,7 +259,7 @@ $ oc get pods
 NAME                                                              READY   STATUS      RESTARTS   AGE
 build-deploy-tekton-101-4g5pq-debug-b9d5p-pod-vb8w7               0/1     Completed   0          50s
 build-deploy-tekton-101-4g5pq-nodejs-build-image-tt5xr-po-v96g7   0/6     Completed   0          2m57s
-build-deploy-tekton-101-4g5pq-nodejs-general-deploy-mln6r-lbhcw   0/2     Completed   0          50s
+build-deploy-tekton-101-4g5pq-custom-general-deploy-mln6r-lbhcw   0/2     Completed   0          50s
 ...
 el-nodejs-build-deploy-trigger-listener-57d5686ccd-7s6h6          1/1     Running     0          150m
 tekton-101-59cf598599-v27xr                                       1/1     Running     0          37s
@@ -266,7 +275,7 @@ NAME                                      HOST/PORT                             
 el-nodejs-build-deploy-trigger-listener   el-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-56ea.sandbox779.opentlc.com          el-nodejs-build-deploy-trigger-listener   http-listener                 None
 tekton-101                                tekton-101-tekton-101.apps.cluster-56ea.sandbox779.opentlc.com                                       tekton-101                                5000-tcp                      None
 
-$ curl -s "$(oc  get route tekton-101 --template='http://{{.spec.host}}')"
+$ curl -s "$(oc get route tekton-101 --template='http://{{.spec.host}}')"
 Hello from NodeJS Playground!
 ----
 
@@ -293,6 +302,13 @@ This chapter handles advanced topics like
 ** link:https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account[add PullSecret]
 * Collect results
 
+
+
+* Volume, PVC
+** na
+** using `emptyDir`
+
+
 [#additional_topics]
 == Additional topics
 
@@ -303,6 +319,18 @@ This chapter handles additional topics which are relevant for Day-2 work.
 Currently the OpenShift Pipeline does not clean up old pipeline runs.
 
 * Job to cleanup old PipelineRuns. Requirement is not new, see open link:https://github.com/tektoncd/experimental/issues/479[issue].
+
+
+=== Misc
+
+In case to create and run manually a docker image, use the following commands
+----
+$ docker build --rm -t tekton-101:v0.1 -f Dockerfile-custom .
+
+$ docker run -p 49160:5000 -d -e TEKTON_101_ENV_NAME=App1 -e TEKTON_101_ENV_EXAMPLE=Version-0.1 -e TEKTON_101_ENV_DELAY=1 --name tekton-test tekton-101:v0.1 
+
+TEKTON_101_ENV_BACKEND_SERVICE PORT
+----
 
 == References
 
