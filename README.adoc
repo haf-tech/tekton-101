@@ -354,6 +354,8 @@ $ oc logs -f el-nodejs-build-deploy-trigger-listener-57d5686ccd-tlnlj
 
 The EventListener cancel the processing, cause the filter of the `CEL` interceptor `did not return true`.
 
+For details and language defintion of `CEL` see the link:https://github.com/google/cel-spec/blob/master/doc/langdef.md[language spec].
+
 
 === Open
 
