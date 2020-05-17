@@ -96,6 +96,9 @@ spec:
   triggers:
   - name: nodejs-build-deploy-trigger-listener-t1
     interceptors:
+    # CEL interceptor to skip the pipeline if message contains "#skip-pipeline#"
+    - cel:
+        filter: "body.commits.message.indexOf('#skip-pipeline#') == -1"
     - github:
         eventTypes: 
         - pull_request

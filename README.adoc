@@ -359,7 +359,7 @@ Currently the OpenShift Pipeline does not clean up old pipeline runs.
 
 === Misc
 
-In case to create and run manually a docker image, use the following commands
+In case to create and run manually the docker image, use the following commands
 ----
 $ docker build --rm -t tekton-101:v0.1 -f Dockerfile-custom .
 
@@ -367,6 +367,11 @@ $ docker run -p 49160:5000 -d -e TEKTON_101_ENV_NAME=App1 -e TEKTON_101_ENV_EXAM
 
 TEKTON_101_ENV_BACKEND_SERVICE PORT
 ----
+
+=== Versions
+
+Tekton and especially Tekton is heavily under construction and optimizations. Keep an eye on the used version; some version contains breaking changes and API namespaces (e.g. `tekton.dev/v1alpha1` to `triggers.tekton.dev/v1alpha1` etc)
+
 
 == References
 
