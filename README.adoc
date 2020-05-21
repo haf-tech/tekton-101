@@ -402,17 +402,6 @@ Currently the OpenShift Pipeline does not clean up old pipeline runs.
 * Job to cleanup old PipelineRuns. Requirement is not new, see open link:https://github.com/tektoncd/experimental/issues/479[issue].
 
 
-=== Misc
-
-In case to create and run manually the docker image, use the following commands
-----
-$ docker build --rm -t tekton-101:v0.1 -f Dockerfile-custom .
-
-$ docker run -p 49160:5000 -d -e TEKTON_101_ENV_NAME=App1 -e TEKTON_101_ENV_EXAMPLE=Version-0.1 -e TEKTON_101_ENV_DELAY=1 --name tekton-test tekton-101:v0.1 
-
-TEKTON_101_ENV_BACKEND_SERVICE PORT
-----
-
 === Versions
 
 Tekton and especially Tekton is heavily under construction and optimizations. Keep an eye on the used version; some version contains breaking changes and API namespaces (e.g. `tekton.dev/v1alpha1` to `triggers.tekton.dev/v1alpha1` etc)
@@ -443,6 +432,42 @@ config.operator.tekton.dev "cluster" deleted
 
 and then install the new version of the operator `OpenShift Pipelines Operator` provided by `Red Hat`.
 
+=== Uninstall OpenShift Pipeline
+
+To uninstall the OpenShift Pipeline execute the following steps
+
+* Delete the CustomResourceDefinition (CRD) `config.operator.tekton.dev`. This will delete also all (cluster) tasks and pipelines.
+* Delete the Operator
+
+.CLI commands to delete all resources
+----
+$ oc get config.operator.tekton.dev
+NAME      STATUS
+cluster   installed
+
+$ oc delete config.operator.tekton.dev cluster
+config.operator.tekton.dev "cluster" deleted
+
+$ oc get subscription -n openshift-operators openshift-pipelines-operator-rh -o yaml | grep installedCSV
+  installedCSV: openshift-pipelines-operator.v1.0.1
+
+$ oc delete subscription -n openshift-operators openshift-pipelines-operator-rh
+subscription.operators.coreos.com "openshift-pipelines-operator-rh" deleted  
+
+$ oc delete clusterserviceversion openshift-pipelines-operator.v1.0.1 -n openshift-operators
+clusterserviceversion.operators.coreos.com "openshift-pipelines-operator.v1.0.1" deleted
+----
+
+=== Misc
+
+In case to create and run manually the docker image, use the following commands
+----
+$ docker build --rm -t tekton-101:v0.1 -f Dockerfile-custom .
+
+$ docker run -p 49160:5000 -d -e TEKTON_101_ENV_NAME=App1 -e TEKTON_101_ENV_EXAMPLE=Version-0.1 -e TEKTON_101_ENV_DELAY=1 --name tekton-test tekton-101:v0.1 
+
+TEKTON_101_ENV_BACKEND_SERVICE PORT
+----
 
 == References
 
