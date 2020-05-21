@@ -23,7 +23,7 @@ link:https://github.com/tektoncd/pipeline[Tekton] is primarily a framework and o
 This article considers the Tekton integration in OpenShift 4 named link:https://www.openshift.com/learn/topics/pipelines[OpenShift Pipelines], tested with
 
 * version 0.10.7, March 2020: use the `pipelines/base/v0.10` yaml files
-* version 1.0.1, May 2020: use the `pipelines/base/v1.0` yaml files
+* version 1.0.1, May 2020: use the `pipelines/base/v1.0` yaml files. 
 
 The article is divided in the following sections
 
@@ -31,6 +31,7 @@ The article is divided in the following sections
 * <<advanced_pipeline,Advanced pipeline usage>>: extends the base pipeline with additional topics like resource sharing, private registry etc.
 * <<additional_topics,Additional topics>>: Further remaining topics like housekeeping will be handled in the last chapter.
 
+and will handle the latest OpenShift Pipeline version.
 
 === Intro
 
@@ -63,7 +64,7 @@ The base pipeline consists of 3 tasks
 
 image:static/PipelineDetails.png[Pipeline definition]
 
-All definitions are in the directory link:pipelines/base[].
+All definitions are in the directory link:pipelines/base[]. Consider to use the right sub-dir dependent from the OpenShift Pipeline Operator version.
 The idea of the pipeline is, that a new event (like a Git Push commit) will trigger the pipeline. The first task is the execution of the existing `s2i-nodejs` task which will receive the Git repository and the expected image stream name/value. The resulting docker image will be pushed to the internal registry in the current namespace.
 The `custom-general-deploy` runs after the `s2i-nodejs` task and (re-)applies the kubernetes manifest files in link:k8s[] or link:openshift[]  directory. This results in a new or updated `Deployment`, `Route` and `Service` objects.
 After a successful pipeline run the application is updated and up and running.
@@ -106,13 +107,13 @@ This chapter handles the pipeline creation and some configuration, like the GitH
 ----
 $ oc new-project tekton-101
 
-$ oc apply -f pipelines/base/
-task.tekton.dev/debug configured
-task.tekton.dev/openshift-cli unchanged
-pipeline.tekton.dev/nodejs-build-deploy unchanged
-triggertemplate.tekton.dev/nodejs-build-deploy-trigger-template unchanged
-triggerbinding.tekton.dev/nodejs-build-deploy-trigger-binding unchanged
-eventlistener.tekton.dev/nodejs-build-deploy-trigger-listener unchanged
+$ oc apply -f pipelines/base/v1.0
+task.tekton.dev/debug created
+task.tekton.dev/openshift-cli created
+pipeline.tekton.dev/nodejs-build-deploy created
+triggertemplate.triggers.tekton.dev/nodejs-build-deploy-trigger-template created
+triggerbinding.triggers.tekton.dev/nodejs-build-deploy-trigger-binding created
+eventlistener.triggers.tekton.dev/nodejs-build-deploy-trigger-listener created
 
 
 $ oc get pipeline
