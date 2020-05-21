@@ -20,7 +20,11 @@ link:https://github.com/tektoncd/pipeline[Tekton] is primarily a framework and o
 * link:https://github.com/openshift/pipelines-catalog[OpenShift Pipeline Catalog]
 * link:https://github.com/kabanero-io/kabanero-pipelines[Kabanero Pipelines]
 
-This article considers the Tekton integration in OpenShift 4 named link:https://www.openshift.com/learn/topics/pipelines[OpenShift Pipelines] (version 0.10.7, March 2020).
+This article considers the Tekton integration in OpenShift 4 named link:https://www.openshift.com/learn/topics/pipelines[OpenShift Pipelines], tested with
+
+* version 0.10.7, March 2020: use the `pipelines/base/v0.10` yaml files
+* version 1.0.1, May 2020: use the `pipelines/base/v1.0` yaml files
+
 The article is divided in the following sections
 
 * <<base_pipeline,Base pipeline usage>>: handles the complete pipeline to build, package, push and deploy an application from a GitHub repository
@@ -79,6 +83,9 @@ The presented pipeline here is a simplified but common definition. Only the firs
 ** Verify the state `Running` pods in `openshift-pipelines` namespace
 ** Reload the OpenShift WebConsole and verify if the menu item `Pipelines` exists
 
+NOTE: Consider to install the Red Hat provided version, but consider that here some differences exists (e.g. supported API version for Tekton/Trigger)
+
+
 
 * Permissions
 ** `oc get serviceaccount pipeline`
@@ -122,6 +129,10 @@ openshift-cli   20s
 $ oc get triggertemplate
 NAME                                   AGE
 nodejs-build-deploy-trigger-template   54s
+
+$ oc get eventlistener.triggers.tekton.dev
+NAME                                   AGE
+nodejs-build-deploy-trigger-listener   20s
 ----
 
 To register the GitHub Webhook is an external reachable URL from the service endpoint of the `EventListener` needed.
@@ -404,6 +415,32 @@ TEKTON_101_ENV_BACKEND_SERVICE PORT
 === Versions
 
 Tekton and especially Tekton is heavily under construction and optimizations. Keep an eye on the used version; some version contains breaking changes and API namespaces (e.g. `tekton.dev/v1alpha1` to `triggers.tekton.dev/v1alpha1` etc)
+
+.Changes 0.10.x to 1.0.x
+* `Task`
+** API `tekton.dev/v1alpha1` to `tekton.dev/v1beta1`
+** `input.resources` to `resources.input`
+** `params` is now on own level, same level like `resources`
+* `Pipeline`, `PipelineRun`
+** API `tekton.dev/v1alpha1` to `tekton.dev/v1beta1`
+* `TriggerTemplate`, `TriggerBinding`, `EventListener`
+** API `tekton.dev/v1alpha1` to `triggers.tekton.dev/v1alpha1`
+* `PipelineResource`
+** API is still `tekton.dev/v1alpha1`!
+
+
+If the old version of the operator or the community version of the Pipeline version is installed, delete the operator and
+
+----
+$ oc get config.operator.tekton.dev
+NAME      STATUS
+cluster   error-pipeline-apply
+
+$ oc delete config.operator.tekton.dev cluster 
+config.operator.tekton.dev "cluster" deleted
+----
+
+and then install the new version of the operator `OpenShift Pipelines Operator` provided by `Red Hat`.
 
 
 == References

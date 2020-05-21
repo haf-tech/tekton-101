@@ -1,0 +1,110 @@
+---
+# Creates a Trigger template which execute the nodejs pipeline if a new event occurred
+# Using the predefined pipeline: nodejs-build-deploy
+# The following k8s objects will be created
+# - TriggerTemplate: a template which will be used if a new event occurred. This template creates the relevant resources and trigger the pipeline
+# - TriggerBinding: a binding definition which extract from the event payload the relevant information/parameters which will be used in the TriggerTemplate
+# - EventListener: the entry point 
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: nodejs-build-deploy-trigger-template
+spec:
+  params:
+  - name: git-repo-url
+    description: The Git repository url
+  - name: git-revision
+    description: The Git revision, default is master branch
+    default: master
+  - name: git-repo-name
+    description: The name of the deployment/application
+  - name: project-name
+    description: The project name/namespace 
+  - name: project-manifests
+    description: Project deployment manifest dir 
+
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1alpha1
+    kind: PipelineResource
+    metadata:
+      name: git-repo-$(params.git-repo-name)-$(uid)
+    spec:
+      type: git
+      params:
+      - name: revision
+        value: $(params.git-revision)
+      - name: url
+        value: $(params.git-repo-url)
+
+  - apiVersion: tekton.dev/v1alpha1
+    kind: PipelineResource
+    metadata:
+      name: image-$(params.git-repo-name)-$(uid)
+    spec:
+      type: image
+      params:
+      - name: url
+        value: image-registry.openshift-image-registry.svc:5000/$(params.project-name)/$(params.git-repo-name):latest
+
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      name: build-deploy-$(params.git-repo-name)-$(uid)
+    spec:
+      serviceAccountName: pipeline
+      # Reference to the nodejs pipeline
+      pipelineRef:
+        name: nodejs-build-deploy
+      resources:
+      - name: git-repo
+        resourceRef:
+          name: git-repo-$(params.git-repo-name)-$(uid)
+      - name: image
+        resourceRef:
+          name: image-$(params.git-repo-name)-$(uid)
+      params:
+      - name: nodejs-version
+        value: '10'
+      - name: deployment-name
+        value: $(params.git-repo-name)
+      - name: k8s_manifests
+        value: $(params.project-manifests)  
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: nodejs-build-deploy-trigger-binding
+spec:
+  params:
+  - name: git-repo-url
+    value: $(body.repository.url)  
+  - name: git-revision
+    value: $(body.head_commit.id)
+  - name: git-repo-name
+    value: $(body.repository.name)
+  - name: project-name
+    value: 'tekton-101'
+  - name: project-manifests
+    value: 'openshift'
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: nodejs-build-deploy-trigger-listener
+spec:
+  serviceAccountName: pipeline
+  triggers:
+  - name: nodejs-build-deploy-trigger-listener-t1
+    interceptors:
+    # CEL interceptor to skip the pipeline if message contains "#skip-pipeline#"
+    - cel:
+        filter: >-
+          (body.commits.all(c, !c.message.contains('#skip-pipeline#')))          
+    - github:
+        eventTypes: 
+        - pull_request
+        - push
+    bindings:
+    - name: nodejs-build-deploy-trigger-binding
+    template:
+      name: nodejs-build-deploy-trigger-template
