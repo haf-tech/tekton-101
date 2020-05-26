@@ -39,7 +39,7 @@ spec:
             memory: 256Mi
         env:
         - name: TEKTON_101_ENV_EXAMPLE
-          value: "env value."
+          value: "Version: %APP_NAME%"
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       volumes:
