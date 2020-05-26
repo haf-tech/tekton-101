@@ -5,6 +5,7 @@ metadata:
   name: %APP_NAME%-deployment-config
   labels:
     app: %APP_NAME%
+    app.kubernetes.io/part-of: %APP_PROJECT%
 spec:
   replicas: 1
   selector:

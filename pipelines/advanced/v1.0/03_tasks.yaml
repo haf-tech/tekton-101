@@ -97,7 +97,7 @@ spec:
               if [ -z $oldSvc ]; then
                 echo "Old service with label $(params.canaryAppLabel) and primary-endpoint=true NOT found."
 
-                oc expose svc $appVersionNew --name $appMain
+                oc expose svc $appVersionNew --name $appMain -l app=$(params.canaryAppLabel) -l app.kubernetes.io/part-of=$(params.canaryAppLabel)
 
                 oc set route-backends $appMain $appVersionNew=100
 
@@ -114,7 +114,7 @@ spec:
                 appVersionOld=$oldSvc
 
                 # set the main facade route
-                oc expose svc $appVersionOld --name $appMain
+                oc expose svc $appVersionOld --name $appMain -l app=$(params.canaryAppLabel) -l app.kubernetes.io/part-of=$(params.canaryAppLabel)
 
                 oc set route-backends $appMain $appVersionOld=100
 
@@ -123,6 +123,9 @@ spec:
 
 
               echo "Start Canary Deployment..."
+
+              # Init balance
+              oc set route-backends $appMain $appVersionOld=100 $appVersionNew=0
               
               # do canary deployment
               while [ $counter -le $slices ]
@@ -158,11 +161,17 @@ spec:
               echo "Canary Deployment done. Set the final weight balance..."
 
               oc set route-backends $appMain $appVersionOld=0 $appVersionNew=100
+              # this removes the alternate backend and replace the old primary backend
+              oc set route-backends $appMain $appVersionNew=100
 
               oc set route-backends $appMain
 
               echo "Change the new service as the primary service/entrypoint..."
               oc patch svc $appVersionNew -p '{"metadata": {"labels": {"primary-endpoint": "true"} } }'
+              oc patch svc $appVersionOld -p '{"metadata": {"labels": {"primary-endpoint": "false"} } }'
+
+              echo "Deleting the old version..."
+              oc delete all -l app=$appVersionOld
 
               echo "Rebalanced to new service."
           }
