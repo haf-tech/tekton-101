@@ -338,6 +338,8 @@ This way allows to test and execute the pipeline without create a Git commit.
 [#advanced_pipeline]
 == Advanced Pipeline
 
+This chapter handles advanced topics. For verifying and testing the functionality use the pipeline definitions in the `pipelines/advanced` directory.
+
 === Skip PipelineRun
 
 In the case that not every git push commit should execute a `PipelineRun` is possible to integrate an additional pre-step to verify if the received event should trigger a run or not. For this, a new interceptor from type link:https://github.com/tektoncd/triggers/blob/master/docs/eventlisteners.md#cel-interceptors[`CEL`] will be introduced. CEL allows to filter and modify incoming events. 

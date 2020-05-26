@@ -1,0 +1,163 @@
+# Task: Canary Deployment
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: canary-deployment
+spec:
+  resources:
+    inputs:
+      - name: source
+        type: git
+  params:
+    - name: canaryWait
+      default: "10"
+      description: Canary param - Wait - period to wait for the next re-balance action.
+      type: string
+    - name: canaryRelativeBalance
+      default: "10"
+      description: Canary param - RelativeBalance - relative weight
+      type: string
+    - name: canarySlices
+      default: "10"
+      description: Canary param - Slices - number of slices/repeats
+      type: string
+    - name: canaryAppMain
+      description: Canary param - AppMain - The main app name of the route
+      type: string
+    - name: canaryAppOld
+      description: Canary param - AppOld - The name of the old service name
+      type: string
+    - name: canaryAppNew
+      description: Canary param - AppNew - The name of the new service name
+      type: string
+    - name: canaryAppLabel
+      description: Canary param - AppLabel - Label/Name identifier for the app
+      type: string
+    - name: canaryK8sResources
+      description: Canary param - k8s resource dir - Directory containing the k8s files for deployment
+      type: string      
+  steps:
+    - name: identify-old-app
+      image: 'quay.io/openshift/origin-cli:latest'    
+      script: |
+        #!/usr/bin/env bash
+
+        echo ""
+      workingDir: /workspace/source
+      resources: {}
+    - name: deploy-app-new
+      image: 'quay.io/openshift/origin-cli:latest'    
+      script: |
+        #!/usr/bin/env bash
+
+        rm -rf /workspace/tmp1
+        mkdir -p /workspace/tmp1
+        cp -r /workspace/source/$(params.canaryK8sResources) /workspace/tmp1
+
+        # set the unified app name
+        find /workspace/tmp1 -type f -exec sed -i 's/%APP_NAME%/$(params.canaryAppNew)/g' {} ';'
+
+        # set the general project name
+        find /workspace/tmp1 -type f -exec sed -i 's/%APP_PROJECT%/$(params.canaryAppLabel)/g' {} ';'
+
+        # disable the flat for primary endpoint
+        find /workspace/tmp1 -type f -exec sed -i 's/%APP_ENDPOINT%/false/g' {} ';'
+
+        # Deploy
+        oc apply -f /workspace/tmp1/
+      workingDir: /workspace/source
+      resources: {}
+    - name: create-facade-route
+      image: 'quay.io/openshift/origin-cli:latest'    
+      script: |
+        #!/usr/bin/env bash
+
+        oc set route-backends $(params.canaryAppMain) $(params.canaryAppOld)=100
+
+        oc set route-backends $(params.canaryAppMain)
+
+
+      workingDir: /workspace/source
+      resources: {}
+    - name: canary-deployment
+      image: 'quay.io/openshift/origin-cli:latest'      
+      script: |
+          #!/usr/bin/env bash
+
+          oc set route-backends $(params.canaryAppMain) $(params.canaryAppOld)=100 $(params.canaryAppNew)=0
+
+          wait=$(params.canaryWait)
+          relativeBalance=$(params.canaryRelativeBalance)
+          slices=$(params.canarySlices)
+          counter=1
+          
+          doCanaryDeployment() {
+
+              appMain=$1
+              appVersionNew=$2
+
+              oldSvc=$(oc get svc -l project=$(params.canaryAppLabel) -l primary-endpoint=true --no-headers | awk {'print $1'})
+        
+              if [ -z $oldSvc ]; then
+                echo "Old service with label $(params.canaryAppLabel) and primary-endpoint=true NOT found."
+
+                oc set route-backends $appMain $appVersionNew=100
+
+                oc set route-backends $appMain
+
+                echo "Change the new service as the primary service/entrypoint..."
+                oc patch svc $appVersionNew -p '{"metadata": {"labels": {"primary-endpoint": "true"} } }'
+
+                echo "General Deployment, no Canary Deployment needed. Done."
+                exit 0;
+              else
+                appVersionOld=$oldSvc
+              fi
+
+              while [ $counter -le $slices ]
+              do
+              newWeight=$(( $relativeBalance * $counter ));
+              echo "Rebalance to ${newWeight} ..."
+              oc set route-backends $appMain --adjust $appVersionNew=+${relativeBalance}%
+
+              oc set route-backends $appMain
+
+              
+              echo "waiting..."
+              counter=$(( $counter + 1 ))
+              sleep $wait
+
+              echo "Checking new service..."
+              res=$(curl -s -o /dev/null -w "%{http_code}" "http://$(oc get routes $appVersionNew -o jsonpath={.spec.host})")
+              if [[ "$res" != "200" ]]; then
+                  echo "Service is not responding with HTTP Status Code 200. Rebalance all traffic back to old version and cancel here."
+
+                  oc set route-backends $appMain $appVersionOld=100 $appVersionNew=0
+
+                  oc set route-backends $appMain
+
+                  exit -1;
+              else
+                  echo "Positive response from service."
+              fi
+
+              
+              done
+
+              oc set route-backends $appMain $appVersionOld=0 $appVersionNew=100
+
+              oc set route-backends $appMain
+
+              echo "Change the new service as the primary service/entrypoint..."
+              oc patch svc $appVersionNew -p '{"metadata": {"labels": {"primary-endpoint": "true"} } }'
+
+              echo "Rebalanced to new service."
+          }
+
+          doCanaryDeployment $(params.canaryAppMain) $(params.canaryAppNew) 
+
+      workingDir: /workspace/source
+      resources: {}
+---
+

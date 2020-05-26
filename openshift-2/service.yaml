@@ -1,0 +1,18 @@
+# %APP_NAME%: Service
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: %APP_NAME%
+    primary-endpoint: %APP_ENDPOINT%
+    project: %APP_PROJECT%
+  name: %APP_NAME%
+spec:
+  type: NodePort
+  ports:
+    - name: 5000-tcp
+      port: 5000
+      targetPort: 5000
+      protocol: TCP
+  selector:
+    app: %APP_NAME%

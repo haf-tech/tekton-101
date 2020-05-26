@@ -2,7 +2,7 @@
 # Creates a pipeline to build and update a nodejs application
 # Referencing tasks from the OpenShift 4 Pipeline catalog:
 # s2i-nodejs: to build, package and push
-# nodejs-general-deploy: to deploy the application using the manifest definitions from the repo
+# custom-general-deploy: to deploy the application using the manifest definitions from the repo
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:

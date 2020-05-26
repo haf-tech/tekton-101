@@ -1,0 +1,137 @@
+---
+# Creates a pipeline to build and update a nodejs application
+# Referencing tasks from the OpenShift 4 Pipeline catalog:
+# s2i-nodejs: to build, package and push
+# custom-general-deploy: to deploy the application using the manifest definitions from the repo
+# custom-canary-deploy: only if requested, a Canary Deployment
+apiVersion: tekton.dev/v1alpha1
+kind: Condition
+metadata:
+  name: is-equal
+spec:
+  params:
+  - name: left
+    type: string
+  - name: right
+    type: string
+  check:
+    image: alpine
+    script: 'test $(params.left) == $(params.right)'
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: nodejs-build-deploy
+spec:
+  # ###### Configuration
+  resources:
+  - name: git-repo
+    type: git
+  - name: image
+    type: image
+  params:    
+  - name: build-id
+    type: string
+    description: Pipeline Build ID
+  - name: nodejs-version
+    type: string
+    description: nodejs version, default 10
+    default: '10'
+  - name: deployment-name
+    type: string
+    description: Deployment/Project name    
+  - name: k8s_manifests
+    type: string
+    description: project deployment manifest directory
+    default: "k8s"
+  - name: use-canary-deployment
+    type: string
+    description: Use Default (true) or Canary Deployment (false). Default true
+    default: 'true'  
+  # ###### Tasks 
+  tasks:
+  # Task: Specific build task for nodejs
+  - name: nodejs-build-image
+    taskRef:
+      name: s2i-nodejs
+      kind: ClusterTask
+    # set the expected resources and parameters of the task
+    resources:      
+      inputs:      
+      - name: source
+        resource: git-repo
+      outputs:
+      - name: image
+        resource: image
+    params:
+    # verify TLS on the registry endpoint
+    - name: TLSVERIFY
+      value: "false" 
+    # nodejs version
+    - name: VERSION
+      value: "$(params.nodejs-version)"    
+  # Task: Simple Debug output    
+  - name: debug
+    taskRef:
+      name: debug
+      kind: Task
+    resources:      
+      inputs:      
+      - name: source
+        resource: git-repo 
+    runAfter:
+    - nodejs-build-image
+  # Task: Custom General/Default Deployment
+  - name: custom-general-deploy
+    conditions:
+    - conditionRef: is-equal
+      params:
+      - name: "left"
+        value: "false"
+      - name: "right"
+        value: "$(params.use-canary-deployment)"
+    taskRef:
+      name: openshift-cli
+      kind: Task
+    resources:      
+      inputs:      
+      - name: source
+        resource: git-repo  
+    params:       
+    - name: ARGS
+      value: 
+      - "apply"
+      - "-f"
+      - $(params.k8s_manifests)
+    runAfter:
+    - nodejs-build-image
+  # Task: Custom Canary Deployment
+  # Only if requested  
+  - name: custom-canary-deploy
+    conditions:
+    - conditionRef: is-equal
+      params:
+      - name: "left"
+        value: "true"
+      - name: "right"
+        value: "$(params.use-canary-deployment)"
+    taskRef:
+      name: canary-deployment
+      kind: Task
+    resources:      
+      inputs:      
+      - name: source
+        resource: git-repo  
+    params:       
+    - name: canaryAppMain
+      value: 'app-main'
+    - name: canaryAppOld
+      value: 'app1'
+    - name: canaryAppNew
+      value: "app-$(params.build-id)"    
+    - name: canaryAppLabel
+      value: $(params.deployment-name)  
+    - name: canaryK8sResources
+      value: $(params.k8s_manifests)
+    runAfter:
+    - nodejs-build-image 
