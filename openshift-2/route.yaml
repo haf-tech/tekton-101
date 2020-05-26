@@ -4,7 +4,7 @@ kind: Route
 metadata:
   labels:
     app: %APP_NAME%
-    app.kubernetes.io/part-of: %APP_NAME%
+    app.kubernetes.io/part-of: %APP_PROJECT%
   name: %APP_NAME%
 spec:
   port:
