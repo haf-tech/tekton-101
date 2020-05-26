@@ -25,6 +25,7 @@ spec:
       labels:
         name: %APP_NAME%
         app: %APP_NAME%
+        app.kubernetes.io/part-of: %APP_NAME%
     spec:
       containers:
       - image: image-registry.openshift-image-registry.svc:5000/tekton-101/tekton-101:latest
@@ -54,5 +55,5 @@ spec:
         name: "tekton-101:latest"
         namespace: "tekton-101"
       containerNames:
-        - "tekton-101"
+        - %APP_NAME%
 status: {}

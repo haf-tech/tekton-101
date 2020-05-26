@@ -5,7 +5,7 @@ metadata:
   labels:
     app: %APP_NAME%
     primary-endpoint: %APP_ENDPOINT%
-    project: %APP_PROJECT%
+    app.kubernetes.io/part-of: %APP_NAME%
   name: %APP_NAME%
 spec:
   type: NodePort

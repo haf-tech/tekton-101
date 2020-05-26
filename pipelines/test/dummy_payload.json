@@ -8,7 +8,7 @@
     },
     "commits": [
       {
-        "id": "637e39517fedcd931f3f2e85d9d41a1f3a7d9623",
+        "id": "12312312132132132123123",
         "distinct": true,
         "message": "This is commit message",
         "timestamp": "2020-05-17T19:41:19+02:00",
@@ -16,6 +16,6 @@
       }
     ],
     "head_commit": {
-      "id": "a5516c481f5b944b9be2872b37bfd23e8ed0acd6"      
+      "id": "master"      
     }
 }

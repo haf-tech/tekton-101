@@ -22,7 +22,6 @@ spec:
     description: The project name/namespace 
   - name: project-manifests
     description: Project deployment manifest dir 
-
   resourcetemplates:
   - apiVersion: tekton.dev/v1alpha1
     kind: PipelineResource
