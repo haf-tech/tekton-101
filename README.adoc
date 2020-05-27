@@ -460,7 +460,9 @@ $ oc delete clusterserviceversion openshift-pipelines-operator.v1.0.1 -n openshi
 clusterserviceversion.operators.coreos.com "openshift-pipelines-operator.v1.0.1" deleted
 ----
 
-=== Misc
+== Misc
+
+=== Run Docker Container Locally 
 
 In case to create and run manually the docker image, use the following commands
 ----
@@ -470,6 +472,11 @@ $ docker run -p 49160:5000 -d -e TEKTON_101_ENV_NAME=App1 -e TEKTON_101_ENV_EXAM
 
 TEKTON_101_ENV_BACKEND_SERVICE PORT
 ----
+
+=== Eclipse Che / CodeReady Integration
+
+The project repository contains a `devfile.yaml` for importing the project into Eclipse Che / Red Hat CodeReady Workspaces.
+
 
 == References
 
