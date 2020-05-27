@@ -1,0 +1,75 @@
+# CodeReady Workspace devfile
+metadata:
+  name: workspace-tekton-101
+projects:
+  - name: tekton-101
+    source:
+      location: 'https://github.com/haf-tech/tekton-101'
+      type: git
+      branch: master
+components:
+  - id: che-incubator/typescript/latest
+    memoryLimit: 512Mi
+    type: chePlugin
+  - mountSources: true
+    endpoints:
+      - name: nodejs
+        port: 3000
+    memoryLimit: 512Mi
+    type: dockerimage
+    alias: nodejs
+    image: >-
+      registry.redhat.io/codeready-workspaces/stacks-node-rhel8@sha256:c88277efda0208d4960917a381278e0956b0839f46fdbe51384370755caa180a
+apiVersion: 1.0.0
+commands:
+  - name: download dependencies
+    actions:
+      - workdir: '${CHE_PROJECTS_ROOT}/tekton-101'
+        type: exec
+        command: npm install
+        component: nodejs
+  - name: run the web app (and download dependencies)
+    actions:
+      - workdir: '${CHE_PROJECTS_ROOT}/tekton-101'
+        type: exec
+        command: npm install; npm start
+        component: nodejs
+  - name: run the web app
+    actions:
+      - workdir: '${CHE_PROJECTS_ROOT}/tekton-101'
+        type: exec
+        command: nodemon app.js
+        component: nodejs
+  - name: run the web app (debugging enabled)
+    actions:
+      - workdir: '${CHE_PROJECTS_ROOT}/tekton-101'
+        type: exec
+        command: nodemon --inspect app.js
+        component: nodejs
+  - name: stop the web app
+    actions:
+      - type: exec
+        command: >-
+          node_server_pids=$(pgrep -fx '.*nodemon (--inspect )?app.js' | tr
+          "\\n" " ") && echo "Stopping node server with PIDs:
+          ${node_server_pids}" &&  kill -15 ${node_server_pids} &>/dev/null &&
+          echo 'Done.'
+        component: nodejs
+  - name: Attach remote debugger
+    actions:
+      - referenceContent: |
+          {
+            "version": "0.2.0",
+            "configurations": [
+              {
+                "type": "node",
+                "request": "attach",
+                "name": "Attach to Remote",
+                "address": "localhost",
+                "port": 9229,
+                "localRoot": "${workspaceFolder}",
+                "remoteRoot": "${workspaceFolder}"
+              }
+            ]
+          }
+        type: vscode-launch
