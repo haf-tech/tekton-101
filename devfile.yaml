@@ -10,13 +10,15 @@ projects:
       branch: master
 components:
   - id: che-incubator/typescript/latest
-    memoryLimit: 512Mi
+    memoryLimit: 256Mi
+    type: chePlugin
+  - id: redhat/vscode-openshift-connector/latest
     type: chePlugin
   - mountSources: true
     endpoints:
       - name: nodejs
         port: 3000
-    memoryLimit: 512Mi
+    memoryLimit: 256Mi
     type: dockerimage
     alias: nodejs
     image: >-
@@ -39,13 +41,13 @@ commands:
     actions:
       - workdir: '${CHE_PROJECTS_ROOT}/tekton-101'
         type: exec
-        command: nodemon app.js
+        command: npm start
         component: nodejs
   - name: run the web app (debugging enabled)
     actions:
       - workdir: '${CHE_PROJECTS_ROOT}/tekton-101'
         type: exec
-        command: nodemon --inspect app.js
+        command: npm start
         component: nodejs
   - name: stop the web app
     actions:
