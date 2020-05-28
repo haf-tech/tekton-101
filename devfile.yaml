@@ -1,6 +1,7 @@
 # CodeReady Workspace devfile
 metadata:
-  name: workspace-tekton-101
+  generateName: workspace-tekton-101
+  #name: workspace-tekton-101
 projects:
   - name: tekton-101
     source:
