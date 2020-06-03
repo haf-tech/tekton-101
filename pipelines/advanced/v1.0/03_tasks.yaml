@@ -143,6 +143,7 @@ spec:
                 res=$(curl -s -o /dev/null -w "%{http_code}" "http://$(oc get routes $appVersionNew -o jsonpath={.spec.host})")
                 if [[ "$res" != "200" ]]; then
                     echo "Service is not responding with HTTP Status Code 200. Rebalance all traffic back to old version and cancel here."
+                    echo "Details. HTTP Response Code ${res}."
 
                     oc set route-backends $appMain $appVersionOld=100 $appVersionNew=0
 
