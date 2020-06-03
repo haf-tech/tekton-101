@@ -41,14 +41,6 @@ spec:
       description: Canary param - namespace - Namespace/Project
       type: string    
   steps:
-    - name: identify-old-app
-      image: 'quay.io/openshift/origin-cli:latest'    
-      script: |
-        #!/usr/bin/env bash
-
-        echo ""
-      workingDir: /workspace/source
-      resources: {}
     - name: deploy-app-new
       image: 'quay.io/openshift/origin-cli:latest'    
       script: |

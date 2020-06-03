@@ -491,7 +491,7 @@ clusterserviceversion.operators.coreos.com "openshift-pipelines-operator.v1.0.1"
 === Known Issues
 
 * Buildah and storage driver
-** In some Cloud/Cluster environments is it necessary to add the storage driver for buildah to `vfs` (`--storage-driver=vfs`), see the link:https://github.com/containers/buildah/issues/2198[bug]. This setups needs more space and has some negative impact on the performance, but this configuration works in all environments
+** In some Cloud/Cluster environments is it necessary to add the storage driver for buildah to `vfs` (`--storage-driver=vfs`), see the link:https://github.com/containers/buildah/issues/2198[bug]. This setups needs more space and has some negative impact on the performance, but this configuration works in all environments. The advanced pipeline definition contains a fixed task definition `s2i-nodejs-v0-11-3-fixed` with the necessary adjustments.
 [yaml]
 ----
     - command:
