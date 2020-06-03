@@ -340,6 +340,28 @@ This way allows to test and execute the pipeline without create a Git commit.
 
 This chapter handles advanced topics. For verifying and testing the functionality use the pipeline definitions in the `pipelines/advanced` directory.
 
+Apply the pipeline definitions and register the Webhook before go on with the next topics.
+
+----
+$ oc apply -f pipelines/advanced/v1.0/
+task.tekton.dev/debug created
+task.tekton.dev/openshift-cli created
+task.tekton.dev/debug2 created
+task.tekton.dev/canary-deployment created
+condition.tekton.dev/is-equal created
+pipeline.tekton.dev/nodejs-build-deploy created
+triggertemplate.triggers.tekton.dev/nodejs-build-deploy-trigger-template created
+triggerbinding.triggers.tekton.dev/nodejs-build-deploy-trigger-binding created
+eventlistener.triggers.tekton.dev/nodejs-build-deploy-trigger-listener created
+
+$ oc expose svc el-nodejs-build-deploy-trigger-listener
+route.route.openshift.io/el-nodejs-build-deploy-trigger-listener exposed
+
+$ echo "$(oc  get route el-nodejs-build-deploy-trigger-listener --template='http://{{.spec.host}}')"
+http://el-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-fbf2.sandbox782.opentlc.com
+
+----
+
 === Skip PipelineRun
 
 In the case that not every git push commit should execute a `PipelineRun` is possible to integrate an additional pre-step to verify if the received event should trigger a run or not. For this, a new interceptor from type link:https://github.com/tektoncd/triggers/blob/master/docs/eventlisteners.md#cel-interceptors[`CEL`] will be introduced. CEL allows to filter and modify incoming events. 
