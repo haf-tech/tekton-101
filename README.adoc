@@ -392,6 +392,10 @@ The EventListener cancel the processing, cause the filter of the `CEL` intercept
 
 For details and language defintion of `CEL` see the link:https://github.com/google/cel-spec/blob/master/doc/langdef.md[language spec].
 
+=== Canary Deployment
+
+tbd
+
 
 === Open
 
