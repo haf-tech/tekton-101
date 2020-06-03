@@ -488,6 +488,25 @@ $ oc delete clusterserviceversion openshift-pipelines-operator.v1.0.1 -n openshi
 clusterserviceversion.operators.coreos.com "openshift-pipelines-operator.v1.0.1" deleted
 ----
 
+=== Known Issues
+
+* Buildah and storage driver
+** In some Cloud/Cluster environments is it necessary to add the storage driver for buildah to `vfs` (`--storage-driver=vfs`), see the link:https://github.com/containers/buildah/issues/2198[bug]. This setups needs more space and has some negative impact on the performance, but this configuration works in all environments
+[yaml]
+----
+    - command:
+      - buildah
+      - bud
+      - '--tls-verify=$(params.TLSVERIFY)'
+      - '--layers'
+      - '--storage-driver=vfs'
+      - '-f'
+      - /gen-source/Dockerfile.gen
+      - '-t'
+      - $(resources.outputs.image.url)
+      - .
+----
+
 == Misc
 
 === Run Docker Container Locally 
