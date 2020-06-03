@@ -86,7 +86,7 @@ spec:
   - name: git-repo-name
     value: $(body.repository.name)
   - name: project-name
-    value: 'tekton-101'
+    value: 'test-tekton-101'
   - name: project-manifests
     value: 'openshift-2'
 ---

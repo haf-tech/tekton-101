@@ -44,6 +44,9 @@ spec:
     type: string
     description: project deployment manifest directory
     default: "k8s"
+  - name: project_name
+    type: string
+    description: project namespace
   - name: use-canary-deployment
     type: string
     description: Use Default (true) or Canary Deployment (false). Default true
