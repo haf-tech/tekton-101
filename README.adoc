@@ -1,6 +1,8 @@
 = Tekton 101
+:author: Hafid Haddouti
 :toc: macro
 :toclevels: 4
+:sectlinks:
 :sectanchors:
 
 toc::[]
