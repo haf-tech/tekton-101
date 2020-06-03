@@ -54,7 +54,7 @@ spec:
       from:
         kind: "ImageStreamTag"
         name: "tekton-101:latest"
-        namespace: "tekton-101"
+        namespace: "%APP_NAMESPACE%"
       containerNames:
         - %APP_NAME%
 status: {}
