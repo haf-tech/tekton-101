@@ -36,7 +36,10 @@ spec:
       type: string
     - name: canaryK8sResources
       description: Canary param - k8s resource dir - Directory containing the k8s files for deployment
-      type: string      
+      type: string  
+    - name: canaryNamespace
+      description: Canary param - namespace - Namespace/Project
+      type: string    
   steps:
     - name: identify-old-app
       image: 'quay.io/openshift/origin-cli:latest'    
@@ -64,6 +67,9 @@ spec:
 
         # set the general project name
         find /workspace/tmp1 -type f -exec sed -i 's/%APP_PROJECT%/$(params.canaryAppLabel)/g' {} ';'
+
+        # set the project/namespace
+        find /workspace/tmp1 -type f -exec sed -i 's/%APP_NAMESPACE%/$(params.canaryNamespace)/g' {} ';'
 
         # disable the flat for primary endpoint
         find /workspace/tmp1 -type f -exec sed -i 's/%APP_ENDPOINT%/"false"/g' {} ';'

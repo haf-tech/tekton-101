@@ -133,5 +133,7 @@ spec:
       value: $(params.deployment-name)  
     - name: canaryK8sResources
       value: $(params.k8s_manifests)
+    - name: canaryNamespace
+      value: $(params.project_name)
     runAfter:
     - nodejs-build-image 
