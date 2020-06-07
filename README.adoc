@@ -400,19 +400,20 @@ tbd
 
 ----
 $ oc apply -f pipelines/advanced/v1.0/02
-task.tekton.dev/debug created
-task.tekton.dev/openshift-cli created
-task.tekton.dev/s2i-nodejs-v0-11-3-fixed created
-task.tekton.dev/dummy-task created
-task.tekton.dev/cd1-deployment created
-task.tekton.dev/cd2-deploy created
-task.tekton.dev/cd2-canary created
-task.tekton.dev/cd2-verification created
+task.tekton.dev/debug configured
+task.tekton.dev/openshift-cli unchanged
+task.tekton.dev/s2i-nodejs-v0-11-3-fixed unchanged
+task.tekton.dev/dummy-task configured
+task.tekton.dev/cd1-deployment unchanged
+task.tekton.dev/cd2-deploy unchanged
+task.tekton.dev/cd2-canary unchanged
+task.tekton.dev/cd2-verification unchanged
 condition.tekton.dev/is-equal unchanged
-pipeline.tekton.dev/p2-nodejs-build-deploy created
-triggertemplate.triggers.tekton.dev/t2-nodejs-build-deploy-trigger-template created
-triggerbinding.triggers.tekton.dev/t2-nodejs-build-deploy-trigger-binding created
-eventlistener.triggers.tekton.dev/t2-nodejs-build-deploy-trigger-listener created
+pipeline.tekton.dev/p2-nodejs-build-deploy unchanged
+persistentvolumeclaim/tekton-workspace-pvc created
+triggertemplate.triggers.tekton.dev/t2-nodejs-build-deploy-trigger-template configured
+triggerbinding.triggers.tekton.dev/t2-nodejs-build-deploy-trigger-binding unchanged
+eventlistener.triggers.tekton.dev/t2-nodejs-build-deploy-trigger-listener configured
 
 
 $ oc expose svc el-t2-nodejs-build-deploy-trigger-listener
@@ -421,7 +422,49 @@ route.route.openshift.io/el-t2-nodejs-build-deploy-trigger-listener exposed
 $ echo "$(oc  get route el-t2-nodejs-build-deploy-trigger-listener --template='http://{{.spec.host}}')"
 http://el-t2-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-fbf2.sandbox782.opentlc.com
 
+$ oc get pvc
+NAME                   STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
+tekton-workspace-pvc   Bound    pvc-18c13a64-7470-4744-8916-b8a7984a24a8   20Gi       RWO            ibmc-block-gold   86s
 
+----
+
+Details
+
+[yaml]
+----
+  workspaces:
+    - name: myworkspace # this workspace name must be declared in the Pipeline
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce # access mode may affect how you can use this volume in parallel tasks
+          resources:
+            requests:
+              storage: 1Gi
+----
+
+`volumeClaimTemplate` is a fresh new feature for workspaces in Tekton. OpenShift Pipeline 1.0.1 does not support this feature. Alternatively create a pvc and use this name for the workspace.
+
+[yaml]
+----
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tekton-workspace-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ibmc-block-gold
+  resources:
+    requests:
+      storage: 10Gi
+---
+...
+  workspaces:
+  - name: myworkspace
+    persistentVolumeClaim:
+      claimName: tekton-workspace-pvc
+    subPath: my-subdir
 ----
 
 

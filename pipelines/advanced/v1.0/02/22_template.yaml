@@ -5,6 +5,19 @@
 # - TriggerTemplate: a template which will be used if a new event occurred. This template creates the relevant resources and trigger the pipeline
 # - TriggerBinding: a binding definition which extract from the event payload the relevant information/parameters which will be used in the TriggerTemplate
 # - EventListener: the entry point 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tekton-workspace-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  # use the default storageClass in the cluster for dynamic provisioning  
+  #storageClassName: ibmc-block-gold
+  resources:
+    requests:
+      storage: 10Gi
+---
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerTemplate
 metadata:
@@ -74,13 +87,16 @@ spec:
         value: $(params.project-name)  
       workspaces:
       - name: pipeline-ws
-        volumeClaimTemplate:
-          spec:
-            accessModes: 
-            - ReadWriteOnce
-            resources:
-              requests:
-                storage: 1Gi
+        persistentVolumeClaim:
+          claimName: tekton-workspace-pvc
+        # Fresh feature, not supported in OpenShift Pipeline 1.0.1
+#        volumeClaimTemplate:
+#          spec:
+#            accessModes: 
+#            - ReadWriteOnce
+#            resources:
+#              requests:
+#                storage: 1Gi
 ---
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerBinding
