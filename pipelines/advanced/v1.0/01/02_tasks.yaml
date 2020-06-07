@@ -3,7 +3,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: debug2
+  name: dummy-task
 spec:
   resources:
     inputs:

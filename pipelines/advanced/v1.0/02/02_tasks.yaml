@@ -1,0 +1,23 @@
+# Security Tasks
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: dummy-task
+spec:
+  resources:
+    inputs:
+      - name: source
+        type: git
+  steps:
+  - name: list-workspace-files
+    image: ubuntu
+    command:
+    - /bin/bash
+    args:
+    - -c
+    - |
+      set -ex
+      find /workspace
+---
+

@@ -8,7 +8,7 @@
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerTemplate
 metadata:
-  name: nodejs-build-deploy-trigger-template
+  name: t1-nodejs-build-deploy-trigger-template
 spec:
   params:
   - name: git-repo-url
@@ -53,7 +53,7 @@ spec:
       serviceAccountName: pipeline
       # Reference to the nodejs pipeline
       pipelineRef:
-        name: nodejs-build-deploy
+        name: p1-nodejs-build-deploy
       resources:
       - name: git-repo
         resourceRef:
@@ -76,7 +76,7 @@ spec:
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerBinding
 metadata:
-  name: nodejs-build-deploy-trigger-binding
+  name: t1-nodejs-build-deploy-trigger-binding
 spec:
   params:
   - name: git-repo-url
@@ -93,7 +93,7 @@ spec:
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: EventListener
 metadata:
-  name: nodejs-build-deploy-trigger-listener
+  name: t1-nodejs-build-deploy-trigger-listener
 spec:
   serviceAccountName: pipeline
   triggers:
@@ -108,6 +108,6 @@ spec:
         - pull_request
         - push
     bindings:
-    - name: nodejs-build-deploy-trigger-binding
+    - name: t1-nodejs-build-deploy-trigger-binding
     template:
-      name: nodejs-build-deploy-trigger-template
+      name: t1-nodejs-build-deploy-trigger-template

@@ -345,7 +345,7 @@ This chapter handles advanced topics. For verifying and testing the functionalit
 Apply the pipeline definitions and register the Webhook before go on with the next topics.
 
 ----
-$ oc apply -f pipelines/advanced/v1.0/
+$ oc apply -f pipelines/advanced/v1.0/01
 task.tekton.dev/debug created
 task.tekton.dev/openshift-cli created
 task.tekton.dev/debug2 created
@@ -356,15 +356,15 @@ triggertemplate.triggers.tekton.dev/nodejs-build-deploy-trigger-template created
 triggerbinding.triggers.tekton.dev/nodejs-build-deploy-trigger-binding created
 eventlistener.triggers.tekton.dev/nodejs-build-deploy-trigger-listener created
 
-$ oc expose svc el-nodejs-build-deploy-trigger-listener
-route.route.openshift.io/el-nodejs-build-deploy-trigger-listener exposed
+$ oc expose svc el-t1-nodejs-build-deploy-trigger-listener
+route.route.openshift.io/el-t1-nodejs-build-deploy-trigger-listener exposed
 
-$ echo "$(oc  get route el-nodejs-build-deploy-trigger-listener --template='http://{{.spec.host}}')"
-http://el-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-fbf2.sandbox782.opentlc.com
+$ echo "$(oc  get route el-t1-nodejs-build-deploy-trigger-listener --template='http://{{.spec.host}}')"
+http://el-t1-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-fbf2.sandbox782.opentlc.com
 
 ----
 
-=== Skip PipelineRun
+=== 01 - Skip PipelineRun
 
 In the case that not every git push commit should execute a `PipelineRun` is possible to integrate an additional pre-step to verify if the received event should trigger a run or not. For this, a new interceptor from type link:https://github.com/tektoncd/triggers/blob/master/docs/eventlisteners.md#cel-interceptors[`CEL`] will be introduced. CEL allows to filter and modify incoming events. 
 
@@ -394,9 +394,35 @@ The EventListener cancel the processing, cause the filter of the `CEL` intercept
 
 For details and language defintion of `CEL` see the link:https://github.com/google/cel-spec/blob/master/doc/langdef.md[language spec].
 
-=== Canary Deployment
+=== 02 - Canary Deployment
 
 tbd
+
+----
+$ oc apply -f pipelines/advanced/v1.0/02
+task.tekton.dev/debug created
+task.tekton.dev/openshift-cli created
+task.tekton.dev/s2i-nodejs-v0-11-3-fixed created
+task.tekton.dev/dummy-task created
+task.tekton.dev/cd1-deployment created
+task.tekton.dev/cd2-deploy created
+task.tekton.dev/cd2-canary created
+task.tekton.dev/cd2-verification created
+condition.tekton.dev/is-equal unchanged
+pipeline.tekton.dev/p2-nodejs-build-deploy created
+triggertemplate.triggers.tekton.dev/t2-nodejs-build-deploy-trigger-template created
+triggerbinding.triggers.tekton.dev/t2-nodejs-build-deploy-trigger-binding created
+eventlistener.triggers.tekton.dev/t2-nodejs-build-deploy-trigger-listener created
+
+
+$ oc expose svc el-t2-nodejs-build-deploy-trigger-listener
+route.route.openshift.io/el-t2-nodejs-build-deploy-trigger-listener exposed
+
+$ echo "$(oc  get route el-t2-nodejs-build-deploy-trigger-listener --template='http://{{.spec.host}}')"
+http://el-t2-nodejs-build-deploy-trigger-listener-tekton-101.apps.cluster-fbf2.sandbox782.opentlc.com
+
+
+----
 
 
 === Open
@@ -491,7 +517,7 @@ clusterserviceversion.operators.coreos.com "openshift-pipelines-operator.v1.0.1"
 === Known Issues
 
 * Buildah and storage driver
-** In some Cloud/Cluster environments is it necessary to add the storage driver for buildah to `vfs` (`--storage-driver=vfs`), see the link:https://github.com/containers/buildah/issues/2198[bug]. This setups needs more space and has some negative impact on the performance, but this configuration works in all environments. The advanced pipeline definition contains a fixed task definition `s2i-nodejs-v0-11-3-fixed` with the necessary adjustments.
+** In some Cloud/Cluster environments is it necessary to add the storage driver for buildah to `vfs` (`--storage-driver=vfs`), see the link:https://github.com/containers/buildah/issues/2198[bug]. This setups needs more space and has some negative impact on the performance, but this configuration works in all environments. The here provided advanced pipeline definition contains a fixed task definition `s2i-nodejs-v0-11-3-fixed` with the necessary adjustments.
 
 [source,yaml]
 ----

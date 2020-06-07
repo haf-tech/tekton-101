@@ -3,7 +3,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: canary-deployment
+  name: cd1-deployment
 spec:
   resources:
     inputs:

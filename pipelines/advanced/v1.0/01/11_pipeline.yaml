@@ -21,7 +21,7 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: nodejs-build-deploy
+  name: p1-nodejs-build-deploy
 spec:
   # ###### Configuration
   resources:
@@ -121,7 +121,7 @@ spec:
       - name: "right"
         value: "$(params.use-canary-deployment)"
     taskRef:
-      name: canary-deployment
+      name: cd1-deployment
       kind: Task
     resources:      
       inputs:      
