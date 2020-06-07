@@ -72,6 +72,15 @@ spec:
         value: $(params.project-manifests)
       - name: project_name
         value: $(params.project-name)  
+      workspaces:
+      - name: pipeline-ws
+        volumeClaimTemplate:
+          spec:
+            accessModes: 
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
 ---
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerBinding
