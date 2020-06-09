@@ -90,7 +90,7 @@ spec:
     runAfter:
     - nodejs-build-image
   # Task: Custom Canary Deployment: Deployment
-  - name: custom-canary-deploy
+  - name: custom-canary-part-deploy
     conditions:
     - conditionRef: is-equal
       params:
@@ -124,7 +124,7 @@ spec:
     runAfter:
     - nodejs-build-image 
   # Task: Custom Canary Deployment: Verification
-  - name: custom-canary-verification
+  - name: custom-canary-part-verification
     taskRef:
       name: cd2-verification
       kind: Task
@@ -133,25 +133,17 @@ spec:
       - name: source
         resource: git-repo  
     params:       
-    - name: canaryAppMain
-      value: 'app-main'
-    - name: canaryAppOld
-      value: 'app1'
     - name: canaryAppNew
-      value: "app-$(params.build-id)"    
-    - name: canaryAppLabel
-      value: $(params.deployment-name)  
-    - name: canaryK8sResources
-      value: $(params.k8s_manifests)
+      value: "app-$(params.build-id)"
     - name: canaryNamespace
       value: $(params.project_name)
     workspaces:
         - name: transfer
           workspace: pipeline-ws
     runAfter:
-    - custom-canary-deploy
+    - custom-canary-part-deploy
   # Task: Custom Canary Deployment: Verification
-  - name: custom-canary-canary
+  - name: custom-canary-part-canary
     taskRef:
       name: cd2-canary
       kind: Task
@@ -176,4 +168,4 @@ spec:
         - name: transfer
           workspace: pipeline-ws
     runAfter:
-    - custom-canary-deploy
+    - custom-canary-part-deploy

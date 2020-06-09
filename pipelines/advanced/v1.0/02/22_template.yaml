@@ -61,7 +61,7 @@ spec:
   - apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
     metadata:
-      name: build-deploy-$(params.git-repo-name)-$(uid)
+      name: p2-build-deploy-$(params.git-repo-name)-$(uid)
     spec:
       serviceAccountName: pipeline
       # Reference to the nodejs pipeline

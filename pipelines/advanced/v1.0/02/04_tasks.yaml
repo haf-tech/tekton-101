@@ -12,7 +12,7 @@ spec:
       - name: source
         type: git
   workspaces:
-    - name: transfer-status
+    - name: transfer
       mountPath: canary-status
   params:
     - name: canaryWait
@@ -87,7 +87,7 @@ spec:
       - name: source
         type: git
   workspaces:
-    - name: transfer-status
+    - name: transfer
       mountPath: canary-status
   params:
     - name: canaryWait
@@ -139,7 +139,7 @@ spec:
               appVersionNew=$2
 
               # set status that deployment starts/is in progress
-              echo "true" > $(workspaces.transfer-status.path)/deploy-status
+              echo "true" > $(workspaces.transfer.path)/deploy-status
 
               # Determine the old service
               oldSvc=$(oc get svc -l app.kubernetes.io/part-of=$(params.canaryAppLabel) -l primary-endpoint=true --no-headers | awk {'print $1'})
@@ -192,7 +192,7 @@ spec:
                 sleep $wait
 
                 echo "Checking new service..."
-                deployVerificationStatus=$(cat $(workspaces.transfer-status.path)/deploy-verification)
+                deployVerificationStatus=$(cat $(workspaces.transfer.path)/deploy-verification)
 
                 if [[ "$deployVerificationStatus" != "true" ]]; then
                     echo "Service verification failed. Rebalance all traffic back to old version and cancel here."
@@ -202,7 +202,7 @@ spec:
                     oc set route-backends $appMain
 
                     # Set the status that deployment is done
-                    echo "false" > $(workspaces.transfer-status.path)/deploy-status
+                    echo "false" > $(workspaces.transfer.path)/deploy-status
 
                     exit -1;
                 else
@@ -228,7 +228,7 @@ spec:
               oc delete all -l app=$appVersionOld
 
               # Set the status that deployment is done
-              echo "false" > $(workspaces.transfer-status.path)/deploy-status
+              echo "false" > $(workspaces.transfer.path)/deploy-status
 
               echo "Rebalanced to new service."
           }
@@ -249,7 +249,7 @@ spec:
       - name: source
         type: git
   workspaces:
-    - name: transfer-status
+    - name: transfer
       mountPath: canary-status
   params:
     - name: canaryWait
@@ -259,6 +259,9 @@ spec:
     - name: canaryAppNew
       description: Canary param - AppNew - The name of the new service name
       type: string
+    - name: canaryNamespace
+      description: Canary param - namespace - Namespace/Project
+      type: string 
   steps:
     - name: deployment-verification
       image: 'quay.io/openshift/origin-cli:latest'      
@@ -267,7 +270,17 @@ spec:
 
 
         wait=$(params.canaryWait)
+
+        echo "------------------------"
           
+        ls -l $(workspaces.transfer.path)/
+
+        echo "------------------------"
+
+        ls -l /workspace/
+        
+        echo "------------------------"
+
         # do verification till the deployment is in progress
         deployInProgress=true
         while [ $deployInProgress ]
@@ -282,18 +295,18 @@ spec:
           echo "Checking new service..."
           res=$(curl -s -o /dev/null -w "%{http_code}" "http://$(oc get routes $appVersionNew -o jsonpath={.spec.host})")
           if [[ "$res" != "200" ]]; then
-              echo "Service is not responding with HTTP Status Code 200. Rebalance all traffic back to old version and cancel here."
+              echo "Service is not responding with HTTP Status Code 200. Verification failed."
               echo "Details. HTTP Response Code ${res}."
 
-              echo "false" > $(workspaces.transfer-status.path)/deploy-verification
+              echo "false" > $(workspaces.transfer.path)/deploy-verification
           else
               echo "Positive response from service."
 
-              echo "true" > $(workspaces.transfer-status.path)/deploy-verification
+              echo "true" > $(workspaces.transfer.path)/deploy-verification
           fi
 
           # Get the status of the deployment, if still in progress
-          deployInProgress=$(cat $(workspaces.transfer-status.path)/deploy-status)
+          deployInProgress=$(cat $(workspaces.transfer.path)/deploy-status)
 
         done
 
