@@ -125,6 +125,10 @@ var memData = [];
 var memItemSize=10000;
 app.get('/mem/consume', (req, res) => {
   
+  if(memData == undefined) {
+    memData = [];
+  }
+
   for(i = 0; i < memItemSize; i++) {
     memData.push('memory test data');
   }
@@ -144,6 +148,7 @@ app.get('/mem/consume', (req, res) => {
 
 app.get('/mem/reset', (req, res) => {
   
+  memData = undefined;
   memData = [];
 
   var ret = {}
