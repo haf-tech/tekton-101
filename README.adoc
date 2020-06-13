@@ -590,6 +590,18 @@ $ docker run -p 49160:5000 -d -e TEKTON_101_ENV_NAME=App1 -e TEKTON_101_ENV_EXAM
 TEKTON_101_ENV_BACKEND_SERVICE PORT
 ----
 
+
+=== Deploy with Helm (3)
+
+In case you will deploy the application using Helm(3) into an OpenShift 4 Cluster use the helm charts in the `helm-ocp` directory which contains OpenShift related resources to build, package and deploy the application.
+
+----
+$ ./helm3 upgrade --install tekton-101-app helm-ocp/ --debug
+
+$ curl $(oc get route tekton-101 --template='http://{{.spec.host}}')
+[TEKTON_101]: Hello from NodeJS Playground! TEKTON_101_ENV_EXAMPLE=tekton-101-app-tekton-101-ocp%
+----
+
 === Eclipse Che / CodeReady Integration
 
 The project repository contains a `devfile.yaml` for importing the project into Eclipse Che / Red Hat CodeReady Workspaces.

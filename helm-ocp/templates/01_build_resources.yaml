@@ -1,0 +1,125 @@
+apiVersion: v1
+items:
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    labels:
+      app: {{ include "tekton-101-ocp.fullname" . }}
+    name: {{ .Values.projectName | quote }}
+    namespace: {{ .Values.namespace | quote }}
+  spec:
+    failedBuildsHistoryLimit: 5
+    nodeSelector: null
+    output:
+      to:
+        kind: ImageStreamTag
+        name: {{ print .Values.projectName ":latest" | quote }}
+    postCommit: {}
+    resources: {}
+    runPolicy: Serial
+    source:
+      git:
+        uri: {{ .Values.source.repository.url }}
+        ref: {{ .Values.source.repository.ref }}
+      type: Git
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: nodejs:10
+          namespace: openshift
+      type: Source
+    successfulBuildsHistoryLimit: 5
+    triggers:
+    - github:
+        secret: {{ .Values.source.repository.webHookSecret | default (randAlphaNum 40) | quote }}
+      type: GitHub
+    - generic:
+        secret: {{ .Values.source.repository.webHookSecret | default (randAlphaNum 40) | quote }}
+      type: Generic
+    - type: ConfigChange
+    - imageChange:
+        lastTriggeredImageID: image-registry.openshift-image-registry.svc:5000/openshift/nodejs@sha256:08f8d69ee9310546c0a4fe5c85dfbbce055f4af57b550a8fbe097ac296cfd6a5
+      type: ImageChange
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    labels:
+      app: {{ include "tekton-101-ocp.fullname" . }}
+    name: {{ .Values.projectName | quote }}
+    namespace: {{ .Values.namespace | quote }}
+  spec:
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      app: {{ include "tekton-101-ocp.fullname" . }}
+      deploymentconfig: {{ include "tekton-101-ocp.fullname" . }}
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftNewApp
+        creationTimestamp: null
+        labels:
+          app: {{ include "tekton-101-ocp.fullname" . }}
+          deploymentconfig: {{ include "tekton-101-ocp.fullname" . }}
+      spec:
+        containers:
+        - image: {{ print "image-registry.openshift-image-registry.svc:5000/" .Values.namespace "/" .Values.projectName ":latest" | quote }}
+          imagePullPolicy: Always
+          name: {{ .Values.projectName | quote }}
+          env:
+          - name: TEKTON_101_ENV_EXAMPLE
+            value: {{ include "tekton-101-ocp.fullname" . }}
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - {{ .Values.projectName | quote }}
+        from:
+          kind: ImageStreamTag
+          name: {{ print .Values.projectName ":latest" | quote }}
+          namespace: {{ .Values.namespace | quote }}
+      type: ImageChange
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    labels:
+      app: {{ include "tekton-101-ocp.fullname" . }}
+    name: {{ .Values.projectName | quote }}
+    namespace: {{ .Values.namespace | quote }}
+  spec:
+    lookupPolicy:
+      local: false
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""

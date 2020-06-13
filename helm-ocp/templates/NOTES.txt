@@ -1,0 +1,13 @@
+###########################################
+Helm deployment
+Chart: {{ .Chart.Name }}
+Release: {{ .Release.Name }}
+Details:
+ $ helm status {{ .Release.Name }}
+ $ helm get all {{ .Release.Name }}
+
+Article/Tutorial: 
+https://github.com/haf-tech/tekton-101
+
+URL to interface
+ $ oc get route {{ .Values.projectName }}

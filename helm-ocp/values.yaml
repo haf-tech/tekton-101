@@ -1,0 +1,21 @@
+# Default values for tekton-101-ocp.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+projectName: tekton-101
+version: latest
+port: 5000
+memoryLimit: 256Mi
+source:
+  repository:
+    url: https://github.com/haf-tech/tekton-101
+    ref: master
+    contextDir:
+    webHookSecret: 
+
+namespace: test-helm3
+
+
+
