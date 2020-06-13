@@ -119,6 +119,39 @@ app.get('/', (req, res) => {
   });
   
 });
+
+// ## Memory use case
+var memData = [];
+var memItemSize=10000;
+app.get('/mem/consume', (req, res) => {
+  
+  for(i = 0; i < memItemSize; i++) {
+    memData.push('memory test data');
+  }
+
+  // process.memoryUsage()
+  // provides info about memory usage
+  // rss: Resident Set Size, total allocated mem usage
+  // heapTotal: allocated heap
+  // heapUsed: actual memory usage
+  // external: mem of consumed JS engine
+  var ret = {}
+  ret.memoryUsage = process.memoryUsage();
+  ret.totalMemArraySize = memData.length;
+  res.send( ret );
+  
+});
+
+app.get('/mem/reset', (req, res) => {
+  
+  memData = [];
+
+  var ret = {}
+  ret.memoryUsage = process.memoryUsage();
+  ret.totalMemArraySize = memData.length;
+  res.send( ret );
+  
+});
  
 
 // ############# Utilities
