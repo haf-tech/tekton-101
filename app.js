@@ -159,7 +159,39 @@ app.get('/mem/consume', (req, res) => {
   
 });
 
- 
+
+// ## CPU use case
+// For testing the cpu consumption, make endless requests  to the endpoint
+// waitSec=1; mId=0; function doCall() { id=$1; ret=$(curl -s http://127.0.0.1:5000/cpu/consume); printf "...response (%d): %s\n" $id $ret }; while true; do sleep $waitSec; printf "%s: sending request (%d)...\n" "$(date)" $mId; (doCall $mId  &); mId=$((mId+1)); done
+var cpuItemSize=10000;
+var cpuSleep=1
+app.get('/cpu/consume', (req, res) => {
+
+  
+  console.log('cpu consume: consume cpu...')
+  var x = 0.0001;
+  for(i = 0; i < cpuItemSize; i++) {
+    x=x+Math.sqrt(x);
+  }
+
+  console.log('cpu consume: sleep...')
+  sleep(cpuSleep).then(() => {
+
+    // process.cpuUsage()
+    // provides info about cpu usage    
+    var ret = {}
+    ret.cpuUsage = process.cpuUsage();
+    ret.cpuItemSize = cpuItemSize;
+    ret.cpuSleepInMs = cpuSleep;
+    ret.cpuNode = process.env.HOSTNAME;
+
+    // clean up
+    x = undefined;
+
+    console.log('cpu consume: done. ', ret)
+    res.send( ret );
+  });  
+});
 
 // ############# Utilities
 const sleep = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
