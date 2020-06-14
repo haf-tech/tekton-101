@@ -121,42 +121,43 @@ app.get('/', (req, res) => {
 });
 
 // ## Memory use case
-var memData = [];
+// For testing the memory consumption, make endless requests  to the endpoint
+// waitSec=1; mId=0; function doCall() { id=$1; ret=$(curl -s http://127.0.0.1:5000/mem/consume); printf "...response (%d): %s\n" $id $ret }; while true; do sleep $waitSec; printf "%s: sending request (%d)...\n" "$(date)" $mId; (doCall $mId  &); mId=$((mId+1)); done
 var memItemSize=10000;
+var memSleep=20000
 app.get('/mem/consume', (req, res) => {
-  
-  if(memData == undefined) {
-    memData = [];
-  }
 
+  var memData = [];
+  
+  console.log('mem consume: consume memory...')
   for(i = 0; i < memItemSize; i++) {
-    memData.push('memory test data');
+    memData.push('memory test data: ' + new Date());
   }
 
-  // process.memoryUsage()
-  // provides info about memory usage
-  // rss: Resident Set Size, total allocated mem usage
-  // heapTotal: allocated heap
-  // heapUsed: actual memory usage
-  // external: mem of consumed JS engine
-  var ret = {}
-  ret.memoryUsage = process.memoryUsage();
-  ret.totalMemArraySize = memData.length;
-  res.send( ret );
+  console.log('mem consume: sleep...')
+  sleep(memSleep).then(() => {
+
+    // process.memoryUsage()
+    // provides info about memory usage
+    // rss: Resident Set Size, total allocated mem usage
+    // heapTotal: allocated heap
+    // heapUsed: actual memory usage
+    // external: mem of consumed JS engine
+    var ret = {}
+    ret.memoryUsage = process.memoryUsage();
+    ret.memItemSize = memItemSize;
+    ret.memSleepInMs = memSleep;
+
+    // clean up
+    memData = undefined;
+    
+    console.log('mem consume: done. ', ret)
+    res.send( ret );
+  });
+
   
 });
 
-app.get('/mem/reset', (req, res) => {
-  
-  memData = undefined;
-  memData = [];
-
-  var ret = {}
-  ret.memoryUsage = process.memoryUsage();
-  ret.totalMemArraySize = memData.length;
-  res.send( ret );
-  
-});
  
 
 // ############# Utilities
