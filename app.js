@@ -147,10 +147,11 @@ app.get('/mem/consume', (req, res) => {
     ret.memoryUsage = process.memoryUsage();
     ret.memItemSize = memItemSize;
     ret.memSleepInMs = memSleep;
+    ret.memNode = process.env.HOSTNAME;
 
     // clean up
     memData = undefined;
-    
+
     console.log('mem consume: done. ', ret)
     res.send( ret );
   });
