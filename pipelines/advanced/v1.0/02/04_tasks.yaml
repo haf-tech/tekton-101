@@ -74,6 +74,9 @@ spec:
         # Deploy
         echo "Deploying..."
         oc apply -f /workspace/tmp1/
+
+        # Create the workspace for the canary status 
+        mkdir -p $(workspaces.transfer.path)/
       workingDir: /workspace/source
       resources: {}    
 ---
@@ -133,6 +136,8 @@ spec:
           slices=$(params.canarySlices)
           counter=1
           
+          mkdir -p $(workspaces.transfer.path)/
+
           doCanaryDeployment() {
 
               appMain=$1
@@ -272,7 +277,8 @@ spec:
         wait=$(params.canaryWait)
 
         echo "------------------------"
-          
+        mkdir -p $(workspaces.transfer.path)/
+
         ls -l $(workspaces.transfer.path)/
 
         echo "------------------------"
