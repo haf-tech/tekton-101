@@ -13,7 +13,7 @@ spec:
         type: git
   workspaces:
     - name: transfer
-      mountPath: canary-status
+      mountPath: /workspace/canary-status
   params:
     - name: canaryWait
       default: "10"
@@ -88,7 +88,7 @@ spec:
         type: git
   workspaces:
     - name: transfer
-      mountPath: canary-status
+      mountPath: /workspace/canary-status
   params:
     - name: canaryWait
       default: "10"
@@ -250,7 +250,7 @@ spec:
         type: git
   workspaces:
     - name: transfer
-      mountPath: canary-status
+      mountPath: /workspace/canary-status
   params:
     - name: canaryWait
       default: "10"
@@ -278,7 +278,7 @@ spec:
         echo "------------------------"
 
         ls -l /workspace/
-        
+
         echo "------------------------"
 
         # do verification till the deployment is in progress
