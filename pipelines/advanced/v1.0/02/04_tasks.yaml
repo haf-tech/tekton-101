@@ -77,6 +77,10 @@ spec:
 
         # Create the workspace for the canary status 
         mkdir -p $(workspaces.transfer.path)/
+
+        # wait some seconds before processing with the next steps
+        sleep $(params.canaryWait)
+
       workingDir: /workspace/source
       resources: {}    
 ---
@@ -136,12 +140,12 @@ spec:
           slices=$(params.canarySlices)
           counter=1
           
-          mkdir -p $(workspaces.transfer.path)/
-
           doCanaryDeployment() {
 
               appMain=$1
               appVersionNew=$2
+
+              echo "canary deployment, starting..."
 
               # set status that deployment starts/is in progress
               echo "true" > $(workspaces.transfer.path)/deploy-status
@@ -277,7 +281,6 @@ spec:
         wait=$(params.canaryWait)
 
         echo "------------------------"
-        mkdir -p $(workspaces.transfer.path)/
 
         ls -l $(workspaces.transfer.path)/
 
