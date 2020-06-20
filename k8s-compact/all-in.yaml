@@ -1,0 +1,65 @@
+# all-in.yaml
+# contains all resource for Kubernetes
+# could be for example use for Razee deployment
+---
+# Tekton-101: Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tekton-101
+  name: tekton-101
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tekton-101
+  template:
+    metadata:
+      labels:
+        app: tekton-101
+    spec:
+      containers:
+        - image: tekton-101:latest
+          imagePullPolicy: Always
+          name: tekton-101
+          ports:
+            - containerPort: 5000
+              protocol: TCP
+          env:
+            - name: TEKTON_101_ENV_EXAMPLE
+              value: "env value"
+---
+# Tekton-101: Ingress
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: tekton-101-ingress
+  labels:
+    app: tekton-101
+spec:  
+  rules:
+  - http:
+      paths:
+      - path: /
+        backend:
+          serviceName: tekton-101
+          servicePort: 5000
+---
+# Tekton-101: Service
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tekton-101
+  name: tekton-101
+spec:
+  type: NodePort
+  ports:
+    - name: 5000-tcp
+      port: 5000
+      targetPort: 5000
+      protocol: TCP
+  selector:
+    app: tekton-101
+    
