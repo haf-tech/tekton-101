@@ -75,8 +75,11 @@ spec:
         echo "Deploying..."
         oc apply -f /workspace/tmp1/
 
-        # Create the workspace for the canary status 
+        # Create the workspace for the canary status and status files
         mkdir -p $(workspaces.transfer.path)/
+        echo "true" > $(workspaces.transfer.path)/deploy-status
+        echo "true" > $(workspaces.transfer.path)/deploy-verification
+
 
         # wait some seconds before processing with the next steps
         sleep $(params.canaryWait)
@@ -282,7 +285,7 @@ spec:
 
         echo "------------------------"
 
-        ls -l $(workspaces.transfer.path)/
+        ls -lR $(workspaces.transfer.path)/
 
         echo "------------------------"
 
@@ -292,6 +295,8 @@ spec:
 
         # do verification till the deployment is in progress
         deployInProgress=true
+        counter=0
+        allowedRetries=3
         while [ $deployInProgress ]
         do
 
