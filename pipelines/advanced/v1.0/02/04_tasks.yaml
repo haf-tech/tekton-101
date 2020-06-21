@@ -48,6 +48,9 @@ spec:
   steps:
     - name: deploy-app-new
       image: 'quay.io/openshift/origin-cli:latest'    
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 0     
       script: |
         #!/usr/bin/env bash
 
@@ -132,7 +135,10 @@ spec:
       type: string    
   steps:   
     - name: canary-deployment
-      image: 'quay.io/openshift/origin-cli:latest'      
+      image: 'quay.io/openshift/origin-cli:latest' 
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 0     
       script: |
           #!/usr/bin/env bash
 
@@ -276,7 +282,10 @@ spec:
       type: string 
   steps:
     - name: deployment-verification
-      image: 'quay.io/openshift/origin-cli:latest'      
+      image: 'quay.io/openshift/origin-cli:latest' 
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 0          
       script: |
         #!/usr/bin/env bash
 
