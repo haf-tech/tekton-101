@@ -1,5 +1,5 @@
 # Task: Canary Deployment - Advanced
-# Parallelize deployment and verification in separat tasks
+# Parallelize deployment and verification in separate tasks
 # Share the status and verification result using workspace
 ---
 apiVersion: tekton.dev/v1beta1
@@ -46,13 +46,40 @@ spec:
       description: Canary param - namespace - Namespace/Project
       type: string    
   steps:
-    - name: deploy-app-new
+    - name: prepare-pipeline-env
       image: 'quay.io/openshift/origin-cli:latest'    
       securityContext:
-        runAsUser: 1001
+        runAsUser: 0
         runAsGroup: 0     
       script: |
         #!/usr/bin/env bash
+
+        # #####################################
+        # Prepares the environment:
+        # creates the status files for the Canary Deployment and adjust the permissions
+
+        # Create the workspace for the canary status and status files
+        echo "Initialize status files..."
+        mkdir -p $(workspaces.transfer.path)/
+        chgrp -R 0 $(workspaces.transfer.path)
+        
+        ls -l /workspace/
+        ls -l $(workspaces.transfer.path)/
+        echo "true" > $(workspaces.transfer.path)/deploy-status
+        echo "true" > $(workspaces.transfer.path)/deploy-verification
+
+        chmod -R 777 $(workspaces.transfer.path)
+
+        echo "Done."
+    - name: deploy-app-new
+      image: 'quay.io/openshift/origin-cli:latest'  
+      script: |
+        #!/usr/bin/env bash
+
+        # #####################################
+        # Deploys the application:
+        # Deploys the app using the Kubernetes resource files from the source repository
+        # the resource files will be adjusted regarding app name, namespace and other attributes
 
         rm -rf /workspace/tmp1
         mkdir -p /workspace/tmp1
@@ -61,6 +88,7 @@ spec:
         cp -r /workspace/source/$(params.canaryK8sResources)/* /workspace/tmp1
         ls -l /workspace/tmp1
 
+        echo -e "\n########################"
         echo "Preparing the manifest files..."
         # set the unified app name
         find /workspace/tmp1 -type f -exec sed -i 's/%APP_NAME%/$(params.canaryAppNew)/g' {} ';'
@@ -71,23 +99,20 @@ spec:
         # set the project/namespace
         find /workspace/tmp1 -type f -exec sed -i 's/%APP_NAMESPACE%/$(params.canaryNamespace)/g' {} ';'
 
-        # disable the flat for primary endpoint
+        # disable the flag for primary endpoint
         find /workspace/tmp1 -type f -exec sed -i 's/%APP_ENDPOINT%/"false"/g' {} ';'
 
         # Deploy
+        echo -e "\n########################"
         echo "Deploying..."
         oc apply -f /workspace/tmp1/
-
-        # Create the workspace for the canary status and status files
-        mkdir -p $(workspaces.transfer.path)/
-        echo "true" > $(workspaces.transfer.path)/deploy-status
-        echo "true" > $(workspaces.transfer.path)/deploy-verification
-
 
         # wait some seconds before processing with the next steps
         sleep $(params.canaryWait)
 
-      workingDir: /workspace/source
+        echo "Done."
+      #workingDir: /workspace/source
+      workingDir: /workspace/canary-status
       resources: {}    
 ---
 apiVersion: tekton.dev/v1beta1
@@ -135,14 +160,14 @@ spec:
       type: string    
   steps:   
     - name: canary-deployment
-      image: 'quay.io/openshift/origin-cli:latest' 
-      securityContext:
-        runAsUser: 1001
-        runAsGroup: 0     
+      image: 'quay.io/openshift/origin-cli:latest'
       script: |
           #!/usr/bin/env bash
 
-          #oc set route-backends $(params.canaryAppMain) $(params.canaryAppOld)=100 $(params.canaryAppNew)=0
+          # #####################################
+          # Canary Deployment:
+          # process the canary deployment, use the status files to check if the version verification is (still) valid
+          
 
           wait=$(params.canaryWait)
           relativeBalance=$(params.canaryRelativeBalance)
@@ -154,6 +179,7 @@ spec:
               appMain=$1
               appVersionNew=$2
 
+              echo -e "\n########################"
               echo "canary deployment, starting..."
 
               # set status that deployment starts/is in progress
@@ -174,6 +200,7 @@ spec:
                 echo "Change the new service as the primary service/entrypoint..."
                 oc patch svc $appVersionNew -p '{"metadata": {"labels": {"primary-endpoint": "true"} } }'
 
+                echo "false" > $(workspaces.transfer.path)/deploy-status
                 echo "General Deployment, no Canary Deployment needed. Done."
                 exit 0;
               else
@@ -190,6 +217,7 @@ spec:
               fi
 
 
+              echo -e "\n########################"
               echo "Start Canary Deployment..."
 
               # Init balance
@@ -199,6 +227,7 @@ spec:
               while [ $counter -le $slices ]
               do
                 newWeight=$(( $relativeBalance * $counter ));
+                echo "\n########################"
                 echo "Rebalance to ${newWeight} ..."
                 oc set route-backends $appMain --adjust $appVersionNew=+${relativeBalance}%
 
@@ -209,8 +238,11 @@ spec:
                 counter=$(( $counter + 1 ))
                 sleep $wait
 
+                echo "\n########################"
                 echo "Checking new service..."
                 deployVerificationStatus=$(cat $(workspaces.transfer.path)/deploy-verification)
+                cat $(workspaces.transfer.path)/deploy-verification
+                echo "...service verification status ${deployVerificationStatus}."
 
                 if [[ "$deployVerificationStatus" != "true" ]]; then
                     echo "Service verification failed. Rebalance all traffic back to old version and cancel here."
@@ -226,10 +258,10 @@ spec:
                 else
                     echo "Positive response from service verification."
                 fi
-
               
               done
 
+              echo -e "\n########################"
               echo "Canary Deployment done. Set the final weight balance..."
 
               oc set route-backends $appMain $appVersionOld=0 $appVersionNew=100
@@ -238,22 +270,28 @@ spec:
 
               oc set route-backends $appMain
 
+              echo -e "\n########################"
               echo "Change the new service as the primary service/entrypoint..."
               oc patch svc $appVersionNew -p '{"metadata": {"labels": {"primary-endpoint": "true"} } }'
               oc patch svc $appVersionOld -p '{"metadata": {"labels": {"primary-endpoint": "false"} } }'
 
+              
+              echo -e "\n########################"
               echo "Deleting the old version..."
               oc delete all -l app=$appVersionOld
 
               # Set the status that deployment is done
               echo "false" > $(workspaces.transfer.path)/deploy-status
 
+              echo -e "\n########################"
               echo "Rebalanced to new service."
           }
 
           doCanaryDeployment $(params.canaryAppMain) $(params.canaryAppNew) 
 
-      workingDir: /workspace/source
+          echo "Done."
+      #workingDir: /workspace/source
+      workingDir: /workspace/canary-status
       resources: {}
 ---
 # Tasks to execute the verification of the new version/deployment
@@ -283,13 +321,20 @@ spec:
   steps:
     - name: deployment-verification
       image: 'quay.io/openshift/origin-cli:latest' 
-      securityContext:
-        runAsUser: 1001
-        runAsGroup: 0          
       script: |
         #!/usr/bin/env bash
 
+        # #####################################
+        # Verifies the new version:
+        # verifies the new version calling the service endpoint, result will be stored in a status file
+        # This is a demo implementation for the verification step. Use any kind of logic and verification
+        # which fits your application and test. The entire Canary Deployment logic has the following status 
+        # files
+        # - $(workspaces.transfer.path)/deploy-verification: true/false, writing, to symbolize if the verification is still in progress
+        # - $(workspaces.transfer.path)/deploy-status: true/false, reading, to identify if the canary deployment is done or not
 
+
+        appVersionNew=$(params.canaryAppNew)
         wait=$(params.canaryWait)
 
         echo "------------------------"
@@ -302,20 +347,23 @@ spec:
 
         echo "------------------------"
 
+        echo -e "\n########################"
         # do verification till the deployment is in progress
         deployInProgress=true
         counter=0
         allowedRetries=3
-        while [ $deployInProgress ]
+
+        echo "true" > $(workspaces.transfer.path)/deploy-verification
+        cat $(workspaces.transfer.path)/deploy-verification
+
+        while [ "$deployInProgress" != "false" ]
         do
-
-          res=$(curl -s -o /dev/null -w "%{http_code}" "http://$(oc get routes $appVersionNew -o jsonpath={.spec.host})")
-
+          
           echo "waiting..."
           counter=$(( $counter + 1 ))
           sleep $wait
 
-          echo "Checking new service..."
+          echo "Checking new service ${appVersionNew}..."
           res=$(curl -s -o /dev/null -w "%{http_code}" "http://$(oc get routes $appVersionNew -o jsonpath={.spec.host})")
           if [[ "$res" != "200" ]]; then
               echo "Service is not responding with HTTP Status Code 200. Verification failed."
@@ -330,10 +378,13 @@ spec:
 
           # Get the status of the deployment, if still in progress
           deployInProgress=$(cat $(workspaces.transfer.path)/deploy-status)
-
+          cat $(workspaces.transfer.path)/deploy-status
+          echo "...deployment in progress? ${deployInProgress}."
         done
 
-      workingDir: /workspace/source
+        echo "Done."
+      #workingDir: /workspace/source
+      workingDir: /workspace/canary-status
       resources: {}
 ---
 

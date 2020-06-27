@@ -48,13 +48,13 @@ spec:
         name: vol1
   triggers:
   - type: ConfigChange
-  - type: ImageChange
-    imageChangeParams:
-      automatic: true 
-      from:
-        kind: "ImageStreamTag"
-        name: "tekton-101:latest"
-        namespace: "%APP_NAMESPACE%"
-      containerNames:
-        - %APP_NAME%
+#  - type: ImageChange
+#    imageChangeParams:
+#      automatic: true 
+#      from:
+#        kind: "ImageStreamTag"
+#        name: "tekton-101:latest"
+#        namespace: "%APP_NAMESPACE%"
+#      containerNames:
+#        - %APP_NAME%
 status: {}
