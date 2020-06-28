@@ -24,6 +24,11 @@ metadata:
   name: p2-nodejs-build-deploy
 spec:
   # ###### Configuration
+  # Results are not supported yet in OpenShift Pipelines 1.0.1
+#  results:
+#  - name: app-new-baseurl
+#    description: The base URL of the new application version
+#    value: $(tasks.custom-general-deploy.results.app-new-url)
   resources:
   - name: git-repo
     type: git
@@ -106,10 +111,6 @@ spec:
       - name: source
         resource: git-repo  
     params:       
-    - name: canaryAppMain
-      value: 'app-main'
-    - name: canaryAppOld
-      value: 'app1'
     - name: canaryAppNew
       value: "app-$(params.build-id)"    
     - name: canaryAppLabel
@@ -142,7 +143,7 @@ spec:
           workspace: pipeline-ws
     runAfter:
     - custom-canary-part-deploy
-  # Task: Custom Canary Deployment: Verification
+  # Task: Custom Canary Deployment: Canary Deployment logic itself
   - name: custom-canary-part-canary
     taskRef:
       name: cd2-canary
@@ -154,14 +155,10 @@ spec:
     params:       
     - name: canaryAppMain
       value: 'app-main'
-    - name: canaryAppOld
-      value: 'app1'
     - name: canaryAppNew
       value: "app-$(params.build-id)"    
     - name: canaryAppLabel
       value: $(params.deployment-name)  
-    - name: canaryK8sResources
-      value: $(params.k8s_manifests)
     - name: canaryNamespace
       value: $(params.project_name)
     workspaces:

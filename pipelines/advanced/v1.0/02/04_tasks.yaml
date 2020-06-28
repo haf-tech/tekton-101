@@ -14,24 +14,13 @@ spec:
   workspaces:
     - name: transfer
       mountPath: /workspace/canary-status
+  results:
+  - name: app-new-url
+    description: The base URL of the new application version
   params:
     - name: canaryWait
       default: "10"
       description: Canary param - Wait - period to wait for the next re-balance action.
-      type: string
-    - name: canaryRelativeBalance
-      default: "10"
-      description: Canary param - RelativeBalance - relative weight
-      type: string
-    - name: canarySlices
-      default: "10"
-      description: Canary param - Slices - number of slices/repeats
-      type: string
-    - name: canaryAppMain
-      description: Canary param - AppMain - The main app name of the route
-      type: string
-    - name: canaryAppOld
-      description: Canary param - AppOld - The name of the old service name. Will be determined!
       type: string
     - name: canaryAppNew
       description: Canary param - AppNew - The name of the new service name
@@ -48,9 +37,6 @@ spec:
   steps:
     - name: prepare-pipeline-env
       image: 'quay.io/openshift/origin-cli:latest'    
-      securityContext:
-        runAsUser: 0
-        runAsGroup: 0     
       script: |
         #!/usr/bin/env bash
 
@@ -63,11 +49,11 @@ spec:
         mkdir -p $(workspaces.transfer.path)/
         chgrp -R 0 $(workspaces.transfer.path)
         
-        ls -l /workspace/
-        ls -l $(workspaces.transfer.path)/
         echo "true" > $(workspaces.transfer.path)/deploy-status
         echo "true" > $(workspaces.transfer.path)/deploy-verification
 
+        # allow to that anyone can access the files. the userId is unknown, cause in
+        # OpenShift context is the userId randomly set
         chmod -R 777 $(workspaces.transfer.path)
 
         echo "Done."
@@ -84,9 +70,8 @@ spec:
         rm -rf /workspace/tmp1
         mkdir -p /workspace/tmp1
 
-        ls -l /workspace/source/
+        # copy the resource files into an own working directory for the upcoming processing
         cp -r /workspace/source/$(params.canaryK8sResources)/* /workspace/tmp1
-        ls -l /workspace/tmp1
 
         echo -e "\n########################"
         echo "Preparing the manifest files..."
@@ -110,8 +95,12 @@ spec:
         # wait some seconds before processing with the next steps
         sleep $(params.canaryWait)
 
+        # expose the ULR of the new version 
+        # (does not work with OpenShift Pipelines 1.0.1, produces a file not found error, but does not break the logic)  
+        $(oc get route $(params.canaryAppNew) --template='http://{{.spec.host}}') | tee $(results.app-new-url.path)
+
+
         echo "Done."
-      #workingDir: /workspace/source
       workingDir: /workspace/canary-status
       resources: {}    
 ---
@@ -136,15 +125,8 @@ spec:
       default: "10"
       description: Canary param - RelativeBalance - relative weight
       type: string
-    - name: canarySlices
-      default: "10"
-      description: Canary param - Slices - number of slices/repeats
-      type: string
     - name: canaryAppMain
       description: Canary param - AppMain - The main app name of the route
-      type: string
-    - name: canaryAppOld
-      description: Canary param - AppOld - The name of the old service name. Will be determined!
       type: string
     - name: canaryAppNew
       description: Canary param - AppNew - The name of the new service name
@@ -152,9 +134,6 @@ spec:
     - name: canaryAppLabel
       description: Canary param - AppLabel - Label/Name identifier for the app
       type: string
-    - name: canaryK8sResources
-      description: Canary param - k8s resource dir - Directory containing the k8s files for deployment
-      type: string  
     - name: canaryNamespace
       description: Canary param - namespace - Namespace/Project
       type: string    
@@ -171,8 +150,11 @@ spec:
 
           wait=$(params.canaryWait)
           relativeBalance=$(params.canaryRelativeBalance)
-          slices=$(params.canarySlices)
           counter=1
+
+          # Not supported in OpenShift Pipelines 1.0.1, but does not break logic
+          echo "Result: URL of the new app..."
+          cat $(tasks.deploy-app-new.results.app-new-url)
           
           doCanaryDeployment() {
 
@@ -223,11 +205,13 @@ spec:
               # Init balance
               oc set route-backends $appMain $appVersionOld=100 $appVersionNew=0
               
+              # calculate the number of iterations/slices
+              slices=$(( 100 / $relativeBalance ));
               # do canary deployment
               while [ $counter -le $slices ]
               do
                 newWeight=$(( $relativeBalance * $counter ));
-                echo "\n########################"
+                echo -e "\n########################"
                 echo "Rebalance to ${newWeight} ..."
                 oc set route-backends $appMain --adjust $appVersionNew=+${relativeBalance}%
 
@@ -238,7 +222,7 @@ spec:
                 counter=$(( $counter + 1 ))
                 sleep $wait
 
-                echo "\n########################"
+                echo -e "\n########################"
                 echo "Checking new service..."
                 deployVerificationStatus=$(cat $(workspaces.transfer.path)/deploy-verification)
                 cat $(workspaces.transfer.path)/deploy-verification
@@ -290,7 +274,6 @@ spec:
           doCanaryDeployment $(params.canaryAppMain) $(params.canaryAppNew) 
 
           echo "Done."
-      #workingDir: /workspace/source
       workingDir: /workspace/canary-status
       resources: {}
 ---
@@ -337,16 +320,6 @@ spec:
         appVersionNew=$(params.canaryAppNew)
         wait=$(params.canaryWait)
 
-        echo "------------------------"
-
-        ls -lR $(workspaces.transfer.path)/
-
-        echo "------------------------"
-
-        ls -l /workspace/
-
-        echo "------------------------"
-
         echo -e "\n########################"
         # do verification till the deployment is in progress
         deployInProgress=true
@@ -383,7 +356,6 @@ spec:
         done
 
         echo "Done."
-      #workingDir: /workspace/source
       workingDir: /workspace/canary-status
       resources: {}
 ---
