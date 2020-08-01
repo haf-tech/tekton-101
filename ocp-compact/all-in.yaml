@@ -1,0 +1,100 @@
+# all-in.yaml
+# contains all resource for OpenShift
+# could be for example use for Razee deployment
+---
+piVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: tekton-101-deployment-config
+  labels:
+    app: tekton-101
+    app.kubernetes.io/part-of: tekton-101
+spec:
+  replicas: 1
+  selector:
+    name: tekton-101
+  strategy:
+    type: Rolling
+    rollingParams:
+      timeoutSeconds: 60
+#      post:
+#        failurePolicy: Ignore
+#        tagImages:
+#        - containerName: tekton-101
+#          to:
+#            kind: ImageStreamTag
+#            name: tekton-101:latest
+  template:
+    metadata:
+      labels:
+        razee/watch-resource: "detail"
+        name: tekton-101
+        app: tekton-101
+        app.kubernetes.io/part-of: tekton-101
+    spec:
+      containers:
+      - image: image-registry.openshift-image-registry.svc:5000/test-tekton-101/tekton-101:latest
+        imagePullPolicy: Always
+        name: tekton-101
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+        resources:
+          limits:
+            memory: 256Mi
+        env:
+        - name: TEKTON_101_ENV_EXAMPLE
+          value: "Version: tekton-101"
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+      - emptyDir: {}
+        name: vol1
+  triggers:
+  - type: ConfigChange
+#  - type: ImageChange
+#    imageChangeParams:
+#      automatic: true 
+#      from:
+#        kind: "ImageStreamTag"
+#        name: "tekton-101:latest"
+#        namespace: "test-tekton-101"
+#      containerNames:
+#        - tekton-101
+status: {}
+---
+# tekton-101: Route
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: tekton-101
+    app.kubernetes.io/part-of: tekton-101
+  name: tekton-101
+spec:
+  port:
+    targetPort: 5000-tcp
+  to:
+    kind: Service
+    name: tekton-101
+    weight: 100
+---
+# tekton-101: Service
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tekton-101
+    primary-endpoint: "true"
+    app.kubernetes.io/part-of: tekton-101
+  name: tekton-101
+spec:
+  type: NodePort
+  ports:
+    - name: 5000-tcp
+      port: 5000
+      targetPort: 5000
+      protocol: TCP
+  selector:
+    app: tekton-101
+    
