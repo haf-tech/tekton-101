@@ -7,7 +7,7 @@ items:
       openshift.io/generated-by: OpenShiftNewApp
     labels:
       app: {{ include "tekton-101-ocp.fullname" . }}
-    name: {{ .Values.projectName | quote }}
+    name: {{ .Values.serviceName | quote }}
     namespace: {{ .Values.namespace | quote }}
   spec:
     ports:
@@ -34,7 +34,7 @@ items:
       targetPort: http-tcp
     to:
       kind: Service
-      name: {{ .Values.projectName | quote }}
+      name: {{ .Values.serviceName | quote }}
       weight: 100
     wildcardPolicy: None
 kind: List

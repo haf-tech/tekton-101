@@ -5,6 +5,7 @@
 replicaCount: 1
 
 projectName: tekton-101
+serviceName: tekton-101-v1
 version: latest
 port: 5000
 memoryLimit: 256Mi
@@ -15,7 +16,12 @@ source:
     contextDir:
     webHookSecret: 
 
-namespace: test-helm3
+namespace: test-tekton101-iter8
+
+# Istio configuration
+istio:
+ # Enable annotation to allow sidecar injection
+ enableAnnotation: true
 
 
 

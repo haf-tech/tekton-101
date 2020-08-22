@@ -72,6 +72,9 @@ items:
       metadata:
         annotations:
           openshift.io/generated-by: OpenShiftNewApp
+          {{- if .Values.istio.enableAnnotation }}
+          sidecar.istio.io/inject: "true"
+          {{- end }}
         creationTimestamp: null
         labels:
           app: {{ include "tekton-101-ocp.fullname" . }}
