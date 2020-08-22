@@ -50,6 +50,7 @@ const promClient = require('prom-client');
 const promBundle = require("express-prom-bundle");
 const app = require('express')()
 const axios = require('axios');
+const util = require('util');
 
 // ############# Prometheus 
 // include HTTP method and URL path into the labels
@@ -104,12 +105,27 @@ if(app.get('envTracingEnabled')) {
 // ############# Entry points
 app.get('/', (req, res) => {
   
-  var ret = "[" + app.get('envTektonName') + "]: Hello from NodeJS Playground! TEKTON_101_ENV_EXAMPLE=" + app.get('envTektonExample');
+  //var ret = "[" + app.get('envTektonName') + "]: Hello from NodeJS Playground! TEKTON_101_ENV_EXAMPLE=" + app.get('envTektonExample');
+  var ret = util.format("[%s]: Hello from NodeJS Playground! TEKTON_101_ENV_EXAMPLE=%s\n\n", app.get('envTektonName'), app.get('envTektonExample'));
   var userAgent = req.get('User-Agent');
   console.log('user-agent: ' + userAgent);
 
   // Prometheus Metric: inc and set the user agent
   counterUserAgent.labels(userAgent).inc();
+
+  // append some env vars
+  ret += "Environment variables:\n";
+  ret += util.format("%s=%s\n", "HOSTNAME", (process.env.HOSTNAME || 'localhost'));
+
+  // append all headers
+  ret += "\n\nRequest Headers:\n";
+  for (const headerName in req.headers) {
+    
+    const headerValue = req.headers[headerName];
+    ret += util.format("%s=%s\n", headerName.toUpperCase(), headerValue);
+    
+  }
+
 
   // simulated processing
   var processDelay = app.get('envDelay');
@@ -234,14 +250,16 @@ function callBackendService(ret, req, res) {
 
 app.listen(app.get('port'), app.get('ip'), function() {
   console.log("App.Version: " + process.env.npm_package_version)
+  console.log("--------------------------------------------------------------------")
   console.log("ENV.TEKTON_101: " + app.get('envTektonName'))
   console.log("ENV.TEKTON_101_ENV_EXAMPLE: " + app.get('envTektonExample'))
   console.log("ENV.TEKTON_101_ENV_DELAY: " + app.get('envDelay'))
   console.log("ENV.TEKTON_101_ENV_BACKEND_SERVICE: " + app.get('envBackendService'))
   console.log("ENV.TEKTON_101_ENV_BACKEND_SERVICE_DELAY: " + app.get('envBackendServiceDelay'))
   console.log("ENV.TEKTON_101_ENV_TRACING_ENABLED: " + app.get('envTracingEnabled'))
-  
-  console.log("Node app is running at localhost:" + app.get('port'))
+  console.log("--------------------------------------------------------------------")
+  console.log("Node app is running at http://localhost:" + app.get('port'))
+  console.log("--------------------------------------------------------------------")
 })
 
 module.exports.app = app;

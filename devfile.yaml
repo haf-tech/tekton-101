@@ -12,13 +12,14 @@ components:
   - id: che-incubator/typescript/latest
     memoryLimit: 256Mi
     type: chePlugin
-  - id: redhat/vscode-openshift-connector/latest
-    type: chePlugin
+    # plugin has high memory utilization
+#  - id: redhat/vscode-openshift-connector/latest
+#    type: chePlugin
   - mountSources: true
     endpoints:
       - name: nodejs
         port: 3000
-    memoryLimit: 256Mi
+    memoryLimit: 512Mi
     type: dockerimage
     alias: nodejs
     image: >-
