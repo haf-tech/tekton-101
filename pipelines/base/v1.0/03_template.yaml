@@ -63,12 +63,16 @@ spec:
         resourceRef:
           name: image-$(params.git-repo-name)-$(uid)
       params:
+      - name: build-id
+        value: $(uid)
       - name: nodejs-version
         value: '10'
       - name: deployment-name
         value: $(params.git-repo-name)
       - name: k8s_manifests
         value: $(params.project-manifests)  
+      - name: project_name
+        value: $(params.project-name)
 ---
 apiVersion: triggers.tekton.dev/v1alpha1
 kind: TriggerBinding

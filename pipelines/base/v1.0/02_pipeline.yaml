@@ -3,7 +3,7 @@
 # Referencing tasks from the OpenShift 4 Pipeline catalog:
 # s2i-nodejs: to build, package and push
 # custom-general-deploy: to deploy the application using the manifest definitions from the repo
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1alpha1
 kind: Pipeline
 metadata:
   name: nodejs-build-deploy
@@ -15,10 +15,19 @@ spec:
   - name: image
     type: image
   params:
+  - name: build-id
+    type: string
+    description: Pipeline Build ID
   - name: nodejs-version
     type: string
     description: nodejs version, default 10
     default: '10'
+  - name: deployment-name
+    type: string
+    description: Deployment/Project name 
+  - name: project_name
+    type: string
+    description: project namespace
   - name: k8s_manifests
     type: string
     description: project deployment manifest directory
@@ -56,19 +65,42 @@ spec:
         resource: git-repo 
     runAfter:
     - nodejs-build-image
-  - name: custom-general-deploy
+  - name: custom-general-deploy    
     taskRef:
-      name: openshift-cli
+      name: cd2-deploy
       kind: Task
     resources:      
       inputs:      
       - name: source
         resource: git-repo  
     params:       
-    - name: ARGS
-      value: 
-      - "apply"
-      - "-f"
-      - $(params.k8s_manifests)
+    - name: appNew
+      value: "app-$(params.build-id)"    
+      #value: "app-00"    
+    - name: projectName
+      value: $(params.deployment-name)  
+    - name: k8sResources
+      value: $(params.k8s_manifests)
+    - name: projectNamespace
+      value: $(params.project_name)
+#    workspaces:
+#        - name: transfer
+#          workspace: pipeline-ws
     runAfter:
-    - nodejs-build-image
+    - nodejs-build-image   
+#  - name: custom-general-deploy
+#    taskRef:
+#      name: openshift-cli
+#      kind: Task
+#    resources:      
+#      inputs:      
+#      - name: source
+#        resource: git-repo  
+#    params:       
+#    - name: ARGS
+#      value: 
+#      - "apply"
+#      - "-f"
+#      - $(params.k8s_manifests)
+#    runAfter:
+#    - nodejs-build-image

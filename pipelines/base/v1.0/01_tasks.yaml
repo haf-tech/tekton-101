@@ -46,6 +46,81 @@ spec:
       workingDir: /workspace/source
       resources: {}
 ---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: cd2-deploy
+spec:
+  resources:
+    inputs:
+      - name: source
+        type: git
+#  workspaces:
+#    - name: transfer
+#      mountPath: /workspace/canary-status
+  results:
+  - name: app-new-url
+    description: The base URL of the new application version
+  params:
+    - name: deployWait
+      default: "10"
+      description: Wait - period to wait for the next re-balance action.
+      type: string
+    - name: appNew
+      description: AppNew - The name of the new service name
+      type: string
+    - name: projectName
+      description: Project Name - Label/Name identifier for the app
+      type: string
+    - name: k8sResources
+      description: k8s resource dir - Directory containing the k8s files for deployment
+      type: string  
+    - name: projectNamespace
+      description: namespace - Namespace/Project
+      type: string    
+  steps:    
+    - name: deploy-app-new
+      image: 'quay.io/openshift/origin-cli:latest'  
+      script: |
+        #!/usr/bin/env bash
+
+        # #####################################
+        # Deploys the application:
+        # Deploys the app using the Kubernetes resource files from the source repository
+        # the resource files will be adjusted regarding app name, namespace and other attributes
+
+        rm -rf /workspace/tmp1
+        mkdir -p /workspace/tmp1
+
+        # copy the resource files into an own working directory for the upcoming processing
+        cp -r /workspace/source/$(params.k8sResources)/* /workspace/tmp1
+
+        echo -e "\n########################"
+        echo "Preparing the manifest files..."
+        # set the unified app name
+        find /workspace/tmp1 -type f -exec sed -i 's/%APP_NAME%/$(params.appNew)/g' {} ';'
+
+        # set the general project name
+        find /workspace/tmp1 -type f -exec sed -i 's/%APP_PROJECT%/$(params.projectName)/g' {} ';'
+
+        # set the project/namespace
+        find /workspace/tmp1 -type f -exec sed -i 's/%APP_NAMESPACE%/$(params.projectNamespace)/g' {} ';'
+
+        # disable the flag for primary endpoint
+        find /workspace/tmp1 -type f -exec sed -i 's/%APP_ENDPOINT%/"true"/g' {} ';'
+       
+        # Deploy
+        echo -e "\n########################"
+        echo "Deploying..."
+        oc apply -f /workspace/tmp1/
+
+        # wait some seconds before processing with the next steps
+        sleep $(params.deployWait)
+
+        echo "Done."
+      workingDir: /workspace/source
+      resources: {} 
+---
 # Enhance/Fix the s2i-nodejs
 apiVersion: tekton.dev/v1alpha1
 kind: Task
