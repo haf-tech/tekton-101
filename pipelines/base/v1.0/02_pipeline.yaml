@@ -27,8 +27,10 @@ spec:
   tasks:
   - name: nodejs-build-image
     taskRef:
-      name: s2i-nodejs
-      kind: ClusterTask
+      #name: s2i-nodejs
+      #kind: ClusterTask
+      name: s2i-nodejs-v0-11-3-fixed
+      kind: Task
     # set the expected resources and parameters of the task
     resources:      
       inputs:      
