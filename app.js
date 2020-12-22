@@ -26,6 +26,11 @@
  * TEKTON_101_ENV_TRACING_ENABLED
  * Default false. Enable OpenTracing or not.
  * 
+ * SVC_LANGUAGE_TRANSLATOR_URL
+ * SVC_LANGUAGE_TRANSLATOR_APIKEY
+ * URL and API for Language Translator service
+ * HTTP GET /translate/:lang/:text
+ * if the env vars are empty the endpoint will cancel the processing with a error message
  * 
  * Integrated libs
  * - Prometheus
@@ -44,6 +49,7 @@
  * $ TEKTON_101_ENV_BACKEND_SERVICE=http://127.0.0.1:5001 TEKTON_101_ENV_DELAY=2000 TEKTON_101_ENV_BACKEND_SERVICE_DELAY=0 npm start
  * With a backend service and some delays
  * ******************************
+ * 
 */
 
 const promClient = require('prom-client');
@@ -60,6 +66,7 @@ app.use(metricsMiddleware);
 
 
 const counterUserAgent = new promClient.Counter({name: 'http_request_tekton101_user_agent_total', help: 'Tekton101: User Agents', labelNames: ['ua']});
+const counterTranslations = new promClient.Counter({name: 'http_request_tekton101_translations_total', help: 'Tekton101: Language Translation requests', labelNames: ['lang']});
 
 
 // ############# Application configuration
@@ -103,6 +110,7 @@ if(app.get('envTracingEnabled')) {
 
 
 // ############# Entry points
+// ## Default page, displays all request headers, and the result of the backend service if configured
 app.get('/', (req, res) => {
   
   //var ret = "[" + app.get('envTektonName') + "]: Hello from NodeJS Playground! TEKTON_101_ENV_EXAMPLE=" + app.get('envTektonExample');
@@ -122,8 +130,7 @@ app.get('/', (req, res) => {
   for (const headerName in req.headers) {
     
     const headerValue = req.headers[headerName];
-    ret += util.format("%s=%s\n", headerName.toUpperCase(), headerValue);
-    
+    ret += util.format("%s=%s\n", headerName.toUpperCase(), headerValue);    
   }
 
 
@@ -135,6 +142,79 @@ app.get('/', (req, res) => {
   });
   
 });
+
+// ## Translate
+app.get('/translate/:lang/:txt', (req, res) => {
+  
+  var targetLanguge = req.params.lang;
+  var textToTranslate = req.params.txt;
+  var returnData = "";
+
+  if(!process.env.SVC_LANGUAGE_TRANSLATOR_URL || !process.env.SVC_LANGUAGE_TRANSLATOR_APIKEY) {
+    console.log('translate: no backend service URL and/or API key set. Cancel processing here. Return dummy response');
+    res.send({"translations":[],"word_count":0,"character_count":0,"message":"No backend service defined"});
+    return;
+  }
+
+  
+  var url = process.env.SVC_LANGUAGE_TRANSLATOR_URL;
+  var userId = "apikey";
+  var passwd = process.env.SVC_LANGUAGE_TRANSLATOR_APIKEY;
+  
+
+  var userAgent = req.get('User-Agent');
+  console.log('user-agent: ' + userAgent);
+
+  // Prometheus Metric: inc and set the user agent
+  counterUserAgent.labels(userAgent).inc();
+  // Prometheus Metric: inc translation for given language
+  counterTranslations.labels(targetLanguge).inc();
+
+  let data = JSON.stringify({
+    text: [textToTranslate], 
+    target: targetLanguge
+  })
+
+  axios.interceptors.request.use(request => {
+    console.log('Starting Request', JSON.stringify(request, null, 2))
+
+    for (const headerName in request.headers) {
+    
+      const headerValue = request.headers[headerName];
+      console.log( util.format("%s=%s", headerName.toUpperCase(), headerValue) );
+
+    }
+    return request
+  })
+
+  axios.post(url + "/v3/translate?version=2018-05-01", data, {
+          auth: {
+            username: userId,
+            password: passwd
+          },
+          headers: {
+            post: {
+              'Content-Type': 'application/json'
+            }
+          }
+        })
+          .then(function (response) {
+            console.log(response.status);
+            returnData = response.data;              
+          })
+          .catch(function (error) {
+            // handle error
+            console.log(error.message);
+            returnData = `TranslationService Failed: ${error.message}`;
+          })
+          .finally(function () {
+
+            // send the response to the client
+            res.send(returnData);
+          });
+  
+});
+
 
 // ## Memory use case
 // For testing the memory consumption, make endless requests  to the endpoint
