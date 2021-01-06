@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/haf-tech/tekton-101#readme",
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "express": "~4.16.1",
     "express-prom-bundle": "^6.0.0",
     "jaeger-client": "^3.17.2",
