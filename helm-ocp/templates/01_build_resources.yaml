@@ -48,6 +48,7 @@ items:
   metadata:
     annotations:
       openshift.io/generated-by: OpenShiftNewApp
+      sidecar.jaegertracing.io/inject: "true"
     labels:
       app: {{ include "tekton-101-ocp.fullname" . }}
     name: {{ .Values.projectName | quote }}
@@ -72,6 +73,7 @@ items:
       metadata:
         annotations:
           openshift.io/generated-by: OpenShiftNewApp
+          sidecar.jaegertracing.io/inject: "true"
           {{- if .Values.istio.enableAnnotation }}
           sidecar.istio.io/inject: "true"
           {{- end }}
