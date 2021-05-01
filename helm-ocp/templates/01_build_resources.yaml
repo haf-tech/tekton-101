@@ -73,7 +73,9 @@ items:
       metadata:
         annotations:
           openshift.io/generated-by: OpenShiftNewApp
+          {{- if .Values.jaeger.enableAnnotation }}
           sidecar.jaegertracing.io/inject: "true"
+          {{- end }}
           {{- if .Values.istio.enableAnnotation }}
           sidecar.istio.io/inject: "true"
           {{- end }}
@@ -90,7 +92,7 @@ items:
           - name: TEKTON_101_ENV_EXAMPLE
             value: {{ include "tekton-101-ocp.fullname" . }}
           ports:
-          - containerPort: 8080
+          - containerPort: {{ .Values.port }}
             protocol: TCP
           resources: {}
           terminationMessagePath: /dev/termination-log

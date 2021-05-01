@@ -16,10 +16,15 @@ source:
     contextDir:
     webHookSecret: 
 
-namespace: test-tekton101-iter8
+#namespace: test-tekton101-iter8
+namespace: tekton-101
 
 # Istio configuration
 istio:
+ # Enable annotation to allow sidecar injection
+ enableAnnotation: true
+ 
+jaeger:
  # Enable annotation to allow sidecar injection
  enableAnnotation: true
 
