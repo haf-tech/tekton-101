@@ -96,7 +96,7 @@ NOTE: Consider to install the Red Hat provided version, but consider that here s
 ** All our `EventListener` will use this serviceaccount
 
 * GitHub Secret
-** Not relevant cause the GitHub repository is public and not token is needed to pull the code
+** Not relevant because the GitHub repository is public and no token is needed to pull the code
 
 === Create and Configure Pipeline
 
